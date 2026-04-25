@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Simulator 3D - Learn How Engines Work</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🚗 V8 Engine Simulator</h1>
+            <p class="subtitle">Discover How Internal Combustion Engines Work</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- What is an Engine Section -->
+            <section class="what-is-engine-section">
+                <h2>What is an Engine?</h2>
+                <p class="intro-text">An engine is a machine that converts fuel into motion. But how does it do that?
+                    Let's break it down.</p>
+
+                <div class="engine-definition-grid">
+                    <div class="definition-card">
+                        <div class="card-icon">🔥</div>
+                        <h3>Simple Definition</h3>
+                        <p>An engine is a device that burns fuel to create power. It takes the stored energy in gasoline
+                            and releases it explosively, using that explosion to move a piston, which spins your wheels.
+                        </p>
+                    </div>
+
+                    <div class="definition-card">
+                        <div class="card-icon">⚙️</div>
+                        <h3>How It Relates to Your Car</h3>
+                        <p>Without an engine, your car is just a heavy metal box. The engine is the heart that keeps
+                            your car running. It's what transforms the chemical energy in fuel into the mechanical
+                            energy that moves the car forward.</p>
+                    </div>
+
+                    <div class="definition-card">
+                        <div class="card-icon">💨</div>
+                        <h3>Why Combustion?</h3>
+                        <p>Combustion (burning) is extremely efficient at releasing energy. When fuel burns, it expands
+                            rapidly and creates enormous pressure. Engineers learned to harness this expansion to push
+                            pistons—and pistons push cars!</p>
+                    </div>
+
+                    <div class="definition-card">
+                        <div class="card-icon">🌍</div>
+                        <h3>Universal Principle</h3>
+                        <p>This principle works for everything with a combustion engine: lawnmowers, motorcycles, boats,
+                            airplanes, and trucks. The size changes, but the principle stays the same—burn fuel, capture
+                            the explosion, turn it into motion.</p>
+                    </div>
+                </div>
+
+                <div class="engine-anatomy">
+                    <h3>The Core Components of Every Engine</h3>
+                    <div class="anatomy-grid">
+                        <div class="anatomy-item">
+                            <div class="anatomy-icon">🔩</div>
+                            <h4>Cylinder</h4>
+                            <p>A sealed tube where combustion happens. Fuel and air mix here, ignite, and the explosion
+                                pushes the piston.</p>
+                        </div>
+                        <div class="anatomy-item">
+                            <div class="anatomy-icon">📍</div>
+                            <h4>Piston</h4>
+                            <p>A plug that moves up and down inside the cylinder. It compresses the fuel-air mixture and
+                                gets pushed down by the explosion.</p>
+                        </div>
+                        <div class="anatomy-item">
+                            <div class="anatomy-icon">🔄</div>
+                            <h4>Crankshaft</h4>
+                            <p>Converts the up-and-down motion of pistons into circular motion. This spinning shaft
+                                ultimately spins your wheels.</p>
+                        </div>
+                        <div class="anatomy-item">
+                            <div class="anatomy-icon">🚪</div>
+                            <h4>Valves</h4>
+                            <p>Two doors that control what goes IN (fuel-air) and what comes OUT (burnt gases). Timing
+                                is everything!</p>
+                        </div>
+                        <div class="anatomy-item">
+                            <div class="anatomy-icon">⚡</div>
+                            <h4>Spark Plug</h4>
+                            <p>Creates the spark that ignites the fuel-air mixture. Timing of this spark is critical—too
+                                early or too late ruins power.</p>
+                        </div>
+                        <div class="anatomy-item">
+                            <div class="anatomy-icon">🛢️</div>
+                            <h4>Fuel</h4>
+                            <p>Usually gasoline or diesel. Contains chemical energy waiting to be released. Different
+                                fuels have different energy densities.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How Engine Works Section -->
+            <section class="how-engine-works-section">
+                <h2>How Does an Engine Actually Work?</h2>
+                <p class="intro-text">Now that you understand the components, let's see how they work together in the
+                    engine's heartbeat—the 4-stroke cycle.</p>
+
+                <div class="work-explanation">
+                    <div class="work-step-visual">
+                        <div class="step-flow">
+                            <div class="flow-item">
+                                <div class="flow-number">1</div>
+                                <p>Intake</p>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-item">
+                                <div class="flow-number">2</div>
+                                <p>Compress</p>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-item">
+                                <div class="flow-number">3</div>
+                                <p>Explode</p>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-item">
+                                <div class="flow-number">4</div>
+                                <p>Exhaust</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="work-description">
+                        <p><strong>The engine's job is to repeat this cycle thousands of times per minute.</strong></p>
+                        <p>When you have 8 cylinders (like in a V8), you have 8 pistons doing this simultaneously,
+                            slightly offset from each other. When one piston is being pushed down by an explosion,
+                            another is sucking in fuel, and a third is compressing. This creates smooth, continuous
+                            power instead of jerky, intermittent bursts.</p>
+                        <p>The faster this cycle repeats, the more power the engine produces. That's why we measure
+                            engine performance in RPM (revolutions per minute).</p>
+                    </div>
+                </div>
+
+                <div class="cycle-comparison">
+                    <div class="comparison-card">
+                        <h4>🌱 Single Cylinder Engine</h4>
+                        <p><strong>Example:</strong> Lawnmower</p>
+                        <p>Cycle repeats every 2 rotations → Power strokes infrequent → Vibration and rough operation
+                        </p>
+                    </div>
+
+                    <div class="comparison-card">
+                        <h4>🚗 Four Cylinder Engine</h4>
+                        <p><strong>Example:</strong> Sedan</p>
+                        <p>One piston fires every 1/2 rotation → Frequent power → Smooth operation</p>
+                    </div>
+
+                    <div class="comparison-card highlight-comparison">
+                        <h4>🏎️ V8 Engine</h4>
+                        <p><strong>Example:</strong> Sports Car</p>
+                        <p>One piston fires every 1/4 rotation → Constant power → Ultra-smooth &amp; powerful!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3D Engine Model Section -->
+            <section class="animation-section">
+                <div class="animation-header">
+                    <h2>⚙️ Interactive 3D V8 Engine</h2>
+                    <p class="animation-subtitle">Explore the V8 engine in full 3D — drag to orbit, scroll to zoom</p>
+                </div>
+
+                <div class="model3d-wrapper">
+                    <div class="overlay-tl">
+                        <div class="hud-label">CRANK ANGLE</div>
+                        <div class="hud-value" id="crankAngle3D">0°</div>
+                    </div>
+                    <div class="overlay-tr">
+                        <button class="model-btn" id="xrayBtn" onclick="toggleXRay()">👁 X-Ray</button>
+                        <button class="model-btn model-btn-accent" id="play3dBtn" onclick="togglePlay3D()">▶ Resume</button>
+                    </div>
+                    <div class="overlay-bl">
+                        <span class="hint-text">DRAG TO ORBIT · SCROLL TO ZOOM</span>
+                    </div>
+                    <div id="engine3dContainer"></div>
+                </div>
+
+                <!-- 3D Controls -->
+                <div class="controls-3d">
+                    <button class="btn btn-primary" onclick="togglePlay3D()">▶ Play / Pause</button>
+                    <button class="btn btn-secondary" onclick="reset3D()">⟲ Reset</button>
+                    <button class="btn btn-secondary" onclick="toggleXRay()">👁 X-Ray Toggle</button>
+                    <div class="speed-control">
+                        <label for="speed3dSlider">Speed:</label>
+                        <input type="range" id="speed3dSlider" min="0.5" max="5" step="0.5" value="1" class="slider" oninput="set3DSpeed(this.value)">
+                        <span id="speed3dValue">1x</span>
+                    </div>
+                </div>
+
+                <div class="animation-info">
+                    <div class="info-box">
+                        <h3>Current Stroke: <span id="currentStroke3D">Idle</span></h3>
+                        <p id="strokeDesc3D">Press Play to start the engine simulation and watch the pistons fire.</p>
+                    </div>
+                    <div class="info-box">
+                        <h3>Engine Status</h3>
+                        <p>Firing Cylinder: <span id="firingCyl3D">—</span></p>
+                        <p>RPM: <span id="rpm3D">0</span></p>
+                        <p>Cycle Progress: <span id="progress3D">0</span>%</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stroke Explanation Section -->
+            <section class="explanation-section">
+                <h2>The Four-Stroke Cycle Explained</h2>
+                <p class="intro-text">All internal combustion engines work using the same fundamental cycle. Each
+                    cylinder goes through four strokes:</p>
+
+                <div class="strokes-grid">
+                    <div class="stroke-card">
+                        <div class="stroke-number">1</div>
+                        <h3>Intake (The Breath)</h3>
+                        <p>The piston travels <strong>down</strong>, creating a vacuum inside the cylinder. The intake
+                            valve opens, allowing a mixture of fuel and air to be drawn in.</p>
+                        <ul>
+                            <li>Piston moves: DOWN</li>
+                            <li>Intake valve: OPEN</li>
+                            <li>Exhaust valve: CLOSED</li>
+                            <li>Result: Cylinder fills with fuel-air mixture</li>
+                        </ul>
+                    </div>
+
+                    <div class="stroke-card">
+                        <div class="stroke-number">2</div>
+                        <h3>Compression (The Squeeze)</h3>
+                        <p>Both valves close. The piston travels <strong>up</strong>, compressing the fuel-air mixture
+                            into a tiny space. This builds pressure and heat.</p>
+                        <ul>
+                            <li>Piston moves: UP</li>
+                            <li>Intake valve: CLOSED</li>
+                            <li>Exhaust valve: CLOSED</li>
+                            <li>Result: Pressure and temperature increase</li>
+                        </ul>
+                    </div>
+
+                    <div class="stroke-card highlight">
+                        <div class="stroke-number">3</div>
+                        <h3>Power (The Bang) ⚡</h3>
+                        <p>The spark plug ignites the compressed mixture. It burns rapidly, creating high-pressure gas
+                            that forces the piston back <strong>down</strong>. <strong>This is the only stroke that
+                                creates power!</strong></p>
+                        <ul>
+                            <li>Spark plug: FIRES</li>
+                            <li>Piston moves: DOWN (forced)</li>
+                            <li>Exhaust valve: CLOSED</li>
+                            <li>Result: Mechanical power generated</li>
+                        </ul>
+                    </div>
+
+                    <div class="stroke-card">
+                        <div class="stroke-number">4</div>
+                        <h3>Exhaust (The Cleansing)</h3>
+                        <p>The piston travels <strong>up</strong> again. The exhaust valve opens, pushing burnt gases
+                            out through the exhaust pipe.</p>
+                        <ul>
+                            <li>Piston moves: UP</li>
+                            <li>Intake valve: CLOSED</li>
+                            <li>Exhaust valve: OPEN</li>
+                            <li>Result: Cylinder is cleared, ready for next cycle</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Energy Conversion Section -->
+            <section class="energy-section">
+                <h2>Energy Conversion: The Core Concept</h2>
+                <p class="intro-text">An engine converts energy from one form to another. Understanding this
+                    transformation is key to understanding how engines work.</p>
+                <div class="energy-flow">
+                    <div class="energy-step">
+                        <div class="step-icon">⛽</div>
+                        <div class="step-label">Chemical Energy</div>
+                        <p>Fuel contains stored chemical energy in its molecular bonds</p>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="energy-step">
+                        <div class="step-icon">🔥</div>
+                        <div class="step-label">Thermal Energy</div>
+                        <p>Fuel burns, creating heat and pressure inside the cylinder</p>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="energy-step">
+                        <div class="step-icon">⚙️</div>
+                        <div class="step-label">Mechanical Energy</div>
+                        <p>Pressure moves piston, spinning crankshaft and your wheels</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- V8 Specifications Section -->
+            <section class="v8-specs-section">
+                <h2>V8 Engine: Why 8 Cylinders in a V-Shape?</h2>
+
+                <div class="specs-grid">
+                    <div class="spec-card">
+                        <h3>🎯 General vs. Specific</h3>
+                        <p><strong>General:</strong> A V8 is simply eight generic single-cylinder engines sharing one
+                            crankshaft.</p>
+                        <p><strong>Specific:</strong> The engineering challenge is synchronizing them so they don't
+                            collide and deliver smooth power.</p>
+                    </div>
+
+                    <div class="spec-card">
+                        <h3>💪 Why 8 Cylinders?</h3>
+                        <div class="cylinder-benefits">
+                            <p><strong>Power Density:</strong> More cylinders = more power strokes per revolution</p>
+                            <p><strong>Smoothness:</strong> Multiple power strokes means less vibration</p>
+                            <p><strong>Torque:</strong> More combustion events = more consistent torque delivery</p>
+                        </div>
+                    </div>
+
+                    <div class="spec-card">
+                        <h3>🏗️ The "V" Shape</h3>
+                        <p>Two banks of cylinders arranged at an angle (typically 90°) around a shared crankshaft. This
+                            design:</p>
+                        <ul>
+                            <li>Saves space compared to inline 8-cylinder</li>
+                            <li>Provides better weight distribution</li>
+                            <li>Enables better engine balance</li>
+                        </ul>
+                    </div>
+
+                    <div class="spec-card highlight-spec">
+                        <h3>🎵 Cross-Plane Crankshaft Secret</h3>
+                        <p><strong>Why V8s sound different:</strong></p>
+                        <div class="comparison">
+                            <div>
+                                <strong>Inline-4:</strong>
+                                <p>Pistons move in pairs (1&4 up, 2&3 down) - Regular rhythm → High-pitched sound</p>
+                            </div>
+                            <div>
+                                <strong>Cross-Plane V8:</strong>
+                                <p>Crankshaft lobes offset by 90°. Uneven firing rhythm → Iconic "burble"!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spec-card">
+                        <h3>🔥 Firing Order</h3>
+                        <p>V8 engines use specific firing orders (like 1-5-4-8-6-3-7-2) to ensure:</p>
+                        <ul>
+                            <li>Even distribution of power strokes</li>
+                            <li>Smooth crankshaft rotation</li>
+                            <li>Minimal vibration</li>
+                            <li>Optimal engine balance</li>
+                        </ul>
+                    </div>
+
+                    <div class="spec-card">
+                        <h3>📏 Displacement &amp; Performance</h3>
+                        <p><strong>Displacement:</strong> Total volume of all cylinders at maximum piston extension</p>
+                        <p>Larger displacement = more air-fuel mixture = more power per cycle</p>
+                        <p>Example: A 5.0L V8 has 5 liters of total displacement</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Summary Section -->
+            <section class="summary-section">
+                <h2>Summary: What We've Learned</h2>
+                <div class="summary-box">
+                    <h3>✓ What is an Engine?</h3>
+                    <p>A machine that burns fuel to create mechanical motion—the heart of your car</p>
+
+                    <h3>✓ How It Works:</h3>
+                    <p>The 4-stroke cycle (Intake → Compression → Power → Exhaust) repeats thousands of times per minute
+                    </p>
+
+                    <h3>✓ Energy Conversion:</h3>
+                    <p>Chemical energy (fuel) → Thermal energy (burning) → Mechanical energy (motion)</p>
+
+                    <h3>✓ Universal Principle:</h3>
+                    <p>Same 4-stroke cycle applies to all internal combustion engines</p>
+
+                    <h3>✓ V8 Advantages:</h3>
+                    <p>8 cylinders produce smooth, powerful motion with frequent power strokes and distinctive sound</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2026 V8 Engine Simulator - Educational Project</p>
+            <p>Understanding how engines work through interactive learning</p>
+        </footer>
+    </div>
+
+    <script src="engine.js"></script>
+    <script src="engine3d.js"></script>
+</body>
+
+</html>
