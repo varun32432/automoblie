@@ -1017,7 +1017,7 @@ section h4 {
 
     border-top: none;
 
-    padding-top: 20px;
+    padding-top: 0;
 
 }
 
@@ -1028,9 +1028,9 @@ section h4 {
 
     text-align: center;
 
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 
-    margin-top: 0;
+    margin-top: 20px;
 
 }
 
@@ -2439,6 +2439,8 @@ section h4 {
 
     padding-bottom: 0;
 
+    padding-top: 20px;
+
 }
 
 
@@ -2449,6 +2451,8 @@ section h4 {
 
     margin-top: 0;
 
+    margin-bottom: 0;
+
 }
 
 
@@ -2457,7 +2461,7 @@ section h4 {
 
     position: relative;
 
-    height: 680px;
+    min-height: 600px;
 
     border-radius: 28px;
 
@@ -2465,11 +2469,7 @@ section h4 {
 
     background:
 
-        radial-gradient(circle at 25% 30%, rgba(255, 140, 50, 0.06), transparent 40%),
-
-        radial-gradient(circle at 75% 20%, rgba(80, 160, 255, 0.06), transparent 40%),
-
-        linear-gradient(165deg, #ffffff 0%, #f5f7fb 40%, #edf1f7 100%);
+        linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(235, 240, 248, 0.95) 100%);
 
     border: 1px solid rgba(0, 0, 0, 0.07);
 
