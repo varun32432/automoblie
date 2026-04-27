@@ -1,4 +1,4 @@
-// 3D V8 Engine Simulator - Fixed WebGL Context Issue
+// 3D V8 Engine Simulator - Mobile Optimized
 class Engine3D {
     constructor() {
         this.scene = null;
@@ -14,6 +14,21 @@ class Engine3D {
         this.xRayMode = false;
         this.animationId = null;
         
+        // Mobile detection
+        this.isMobile = this.detectMobile();
+        this.isTouch = 'ontouchstart' in window;
+        
+        // Touch controls
+        this.touches = {
+            start: { x: 0, y: 0 },
+            current: { x: 0, y: 0 },
+            distance: 0,
+            zoom: 1
+        };
+        
+        // Performance settings for mobile
+        this.performanceMode = this.isMobile ? 'mobile' : 'desktop';
+        
         // Materials
         this.materials = {
             metal: null,
@@ -24,6 +39,11 @@ class Engine3D {
         };
         
         this.init();
+    }
+    
+    detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               window.innerWidth <= 768;
     }
     
     init() {
@@ -37,21 +57,39 @@ class Engine3D {
             this.scene = new THREE.Scene();
             this.scene.background = new THREE.Color(0x1a1a1a);
             
-            // Setup camera
-            this.camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
-            this.camera.position.set(0, 5, 15);
+            // Mobile-optimized camera
+            const aspectRatio = this.isMobile ? window.innerWidth / (window.innerHeight * 0.6) : 800 / 600;
+            this.camera = new THREE.PerspectiveCamera(
+                this.isMobile ? 60 : 75, // Wider FOV for mobile
+                aspectRatio,
+                0.1,
+                1000
+            );
+            this.camera.position.set(0, 5, this.isMobile ? 20 : 15);
             this.camera.lookAt(0, 0, 0);
             
-            // Setup renderer with WebGL context
+            // Mobile-optimized renderer
             this.renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
+                antialias: !this.isMobile, // Disable antialiasing on mobile for performance
                 alpha: false,
-                powerPreference: "high-performance"
+                powerPreference: this.isMobile ? "default" : "high-performance",
+                preserveDrawingBuffer: false
             });
-            this.renderer.setSize(800, 600);
-            this.renderer.setPixelRatio(window.devicePixelRatio);
-            this.renderer.shadowMap.enabled = true;
-            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Set size based on device
+            if (this.isMobile) {
+                this.renderer.setSize(window.innerWidth, window.innerHeight * 0.6);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for mobile
+            } else {
+                this.renderer.setSize(800, 600);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+            }
+            
+            // Optimized shadows for mobile
+            this.renderer.shadowMap.enabled = !this.isMobile;
+            if (!this.isMobile) {
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            }
             
             // Create materials
             this.createMaterials();
@@ -81,51 +119,56 @@ class Engine3D {
     }
     
     createMaterials() {
+        // Mobile-optimized materials with reduced complexity
+        const materialOptions = this.isMobile ? {
+            metal: { color: 0x8B8B8B, shininess: 50, specular: 0x111111 },
+            piston: { color: 0x4A4A4A, shininess: 25, specular: 0x080808 },
+            cylinder: { color: 0x6B6B6B, shininess: 15, specular: 0x080808 },
+            crankshaft: { color: 0x3A3A3A, shininess: 40, specular: 0x111111 }
+        } : {
+            metal: { color: 0x8B8B8B, shininess: 100, specular: 0x222222 },
+            piston: { color: 0x4A4A4A, shininess: 50, specular: 0x111111 },
+            cylinder: { color: 0x6B6B6B, shininess: 30, specular: 0x111111 },
+            crankshaft: { color: 0x3A3A3A, shininess: 80, specular: 0x222222 }
+        };
+
         this.materials = {
-            metal: new THREE.MeshPhongMaterial({ 
-                color: 0x8B8B8B, 
-                shininess: 100,
-                specular: 0x222222
-            }),
-            piston: new THREE.MeshPhongMaterial({ 
-                color: 0x4A4A4A, 
-                shininess: 50,
-                specular: 0x111111
-            }),
-            cylinder: new THREE.MeshPhongMaterial({ 
-                color: 0x6B6B6B, 
-                shininess: 30,
-                specular: 0x111111
-            }),
-            crankshaft: new THREE.MeshPhongMaterial({ 
-                color: 0x3A3A3A, 
-                shininess: 80,
-                specular: 0x222222
-            }),
+            metal: new THREE.MeshPhongMaterial(materialOptions.metal),
+            piston: new THREE.MeshPhongMaterial(materialOptions.piston),
+            cylinder: new THREE.MeshPhongMaterial(materialOptions.cylinder),
+            crankshaft: new THREE.MeshPhongMaterial(materialOptions.crankshaft),
             xRay: new THREE.MeshBasicMaterial({ 
                 color: 0x00FFFF, 
                 transparent: true, 
-                opacity: 0.3,
+                opacity: this.isMobile ? 0.4 : 0.3,
                 wireframe: false
             })
         };
     }
     
     setupLights() {
-        // Ambient light
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        // Mobile-optimized lighting
+        const ambientIntensity = this.isMobile ? 0.8 : 0.6;
+        const ambientLight = new THREE.AmbientLight(0x404040, ambientIntensity);
         this.scene.add(ambientLight);
         
-        // Directional light
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 10, 5);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-        this.scene.add(directionalLight);
+        if (!this.isMobile) {
+            // Desktop lighting with shadows
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            this.scene.add(directionalLight);
+        } else {
+            // Mobile lighting without shadows for performance
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(10, 10, 5);
+            this.scene.add(directionalLight);
+        }
         
-        // Point light
-        const pointLight = new THREE.PointLight(0xff6b35, 1, 100);
+        // Point light for dramatic effect
+        const pointLight = new THREE.PointLight(0xff6b35, this.isMobile ? 0.8 : 1, 100);
         pointLight.position.set(0, 3, 0);
         this.scene.add(pointLight);
     }
@@ -263,11 +306,14 @@ class Engine3D {
     }
     
     setupControls() {
-        // Mouse controls
-        this.setupMouseControls();
+        if (this.isTouch) {
+            this.setupTouchControls();
+        } else {
+            this.setupMouseControls();
+        }
         
-        // Touch controls for mobile
-        this.setupTouchControls();
+        // Handle window resize
+        window.addEventListener('resize', () => this.onWindowResize());
     }
     
     setupMouseControls() {
@@ -322,31 +368,127 @@ class Engine3D {
     }
     
     setupTouchControls() {
-        // Simple touch support for mobile devices
-        let touchStartX = 0, touchStartY = 0;
-        
         const canvas = this.renderer.domElement;
+        let lastTouchDistance = 0;
+        let isRotating = false;
+        let isZooming = false;
         
+        // Touch start
         canvas.addEventListener('touchstart', (event) => {
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
+            event.preventDefault();
+            
+            if (event.touches.length === 1) {
+                // Single touch - rotation
+                isRotating = true;
+                this.touches.start.x = event.touches[0].clientX;
+                this.touches.start.y = event.touches[0].clientY;
+            } else if (event.touches.length === 2) {
+                // Two touches - pinch zoom
+                isZooming = true;
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                lastTouchDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+            }
         });
         
+        // Touch move
         canvas.addEventListener('touchmove', (event) => {
             event.preventDefault();
-            const touchX = event.touches[0].clientX;
-            const touchY = event.touches[0].clientY;
             
-            const deltaX = (touchX - touchStartX) * 0.01;
-            const deltaY = (touchY - touchStartY) * 0.01;
-            
-            this.camera.position.x += deltaX;
-            this.camera.position.y -= deltaY;
-            this.camera.lookAt(0, 2, 0);
-            
-            touchStartX = touchX;
-            touchStartY = touchY;
+            if (event.touches.length === 1 && isRotating) {
+                // Single touch rotation
+                const touch = event.touches[0];
+                const deltaX = (touch.clientX - this.touches.start.x) * 0.01;
+                const deltaY = (touch.clientY - this.touches.start.y) * 0.01;
+                
+                // Rotate camera around the engine
+                const spherical = new THREE.Spherical();
+                spherical.setFromVector3(this.camera.position);
+                spherical.theta -= deltaX;
+                spherical.phi += deltaY;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                
+                this.camera.position.setFromSpherical(spherical);
+                this.camera.lookAt(0, 2, 0);
+                
+                this.touches.start.x = touch.clientX;
+                this.touches.start.y = touch.clientY;
+                
+            } else if (event.touches.length === 2 && isZooming) {
+                // Pinch zoom
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                const currentDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                
+                if (lastTouchDistance > 0) {
+                    const scale = currentDistance / lastTouchDistance;
+                    this.camera.position.multiplyScalar(scale);
+                    
+                    // Limit zoom
+                    const distance = this.camera.position.length();
+                    if (distance < 8) {
+                        this.camera.position.normalize().multiplyScalar(8);
+                    } else if (distance > 40) {
+                        this.camera.position.normalize().multiplyScalar(40);
+                    }
+                }
+                
+                lastTouchDistance = currentDistance;
+            }
         });
+        
+        // Touch end
+        canvas.addEventListener('touchend', (event) => {
+            event.preventDefault();
+            
+            if (event.touches.length === 0) {
+                isRotating = false;
+                isZooming = false;
+                lastTouchDistance = 0;
+            }
+        });
+        
+        // Add gyroscope support if available
+        if (window.DeviceOrientationEvent && this.isMobile) {
+            window.addEventListener('deviceorientation', (event) => {
+                if (event.alpha !== null && event.beta !== null && event.gamma !== null) {
+                    // Use gyroscope for subtle camera movement
+                    const alpha = event.alpha * Math.PI / 180;
+                    const beta = event.beta * Math.PI / 180;
+                    const gamma = event.gamma * Math.PI / 180;
+                    
+                    // Apply gentle rotation based on device orientation
+                    const spherical = new THREE.Spherical();
+                    spherical.setFromVector3(this.camera.position);
+                    spherical.theta += gamma * 0.001;
+                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + beta * 0.001));
+                    
+                    this.camera.position.setFromSpherical(spherical);
+                    this.camera.lookAt(0, 2, 0);
+                }
+            });
+        }
+    }
+    
+    onWindowResize() {
+        if (this.isMobile) {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight * 0.6;
+            
+            this.camera.aspect = newWidth / newHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(newWidth, newHeight);
+        } else {
+            this.camera.aspect = 800 / 600;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(800, 600);
+        }
     }
     
     updatePistonPositions() {
