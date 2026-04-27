@@ -394,8 +394,9 @@ body::before {
     .engine-history-stage {
         margin-bottom: 0 !important;
         margin-top: 0 !important;
-        min-height: 350px !important;
-        height: auto !important;
+        min-height: 680px !important;
+        height: 680px !important;
+        overflow: hidden !important;
     }
     
     .model3d-wrapper {
@@ -2535,7 +2536,7 @@ section h4 {
 
     position: relative;
 
-    min-height: 400px;
+    min-height: 680px;
 
     border-radius: 28px;
 
@@ -2543,7 +2544,11 @@ section h4 {
 
     background:
 
-        linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(235, 240, 248, 0.95) 100%);
+        radial-gradient(circle at 25% 30%, rgba(255, 140, 50, 0.06), transparent 40%),
+
+        radial-gradient(circle at 75% 20%, rgba(80, 160, 255, 0.06), transparent 40%),
+
+        linear-gradient(165deg, #ffffff 0%, #f5f7fb 40%, #edf1f7 100%);
 
     border: 1px solid rgba(0, 0, 0, 0.07);
 
