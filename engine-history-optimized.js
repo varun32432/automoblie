@@ -58,11 +58,11 @@
       this.hintEl = root.querySelector(".engine-history-hint");
       this.fadeTargets = Array.from(root.querySelectorAll(".history-fade-target"));
       this.index = -1;
+      this.progress = 0;
       this.targetRotY = -0.3;
       this.sceneState = null;
-      this.scrollProgress = 0;
-      this.scrollRafId = 0;
       this.isVisible = true;
+      this.scrollFrame = 0;
 
       this.onResize = this.onResize.bind(this);
       this.onScroll = this.onScroll.bind(this);
@@ -74,6 +74,14 @@
       this.bindEvents();
       this.onResize();
       this.onScroll();
+    }
+
+    getPixelRatio() {
+      return Math.min(window.devicePixelRatio || 1, window.innerWidth <= 768 ? 1.2 : 1.5);
+    }
+
+    getStickyTop() {
+      return parseFloat(window.getComputedStyle(this.root).top) || 0;
     }
 
     buildIndicators() {
@@ -104,93 +112,12 @@
       this.root.addEventListener("mousemove", this.onMove);
       this.root.addEventListener("mouseleave", this.onLeave);
       window.addEventListener("resize", this.onResize);
+      window.addEventListener("scroll", this.onScroll, { passive: true });
 
-      // Scroll-lock: detect when the history section enters the viewport
-      this.observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting && !this.completed) {
-            // Snap the section fully into view, then lock
-            this.shell.scrollIntoView({ behavior: "smooth", block: "start" });
-            setTimeout(() => { this.isLocked = true; }, 350);
-          }
-          // If user scrolled far past the section (it left viewport), reset
-          if (!entry.isIntersecting && this.completed) {
-            const rect = this.shell.getBoundingClientRect();
-            if (rect.bottom < 0) {
-              // Section is above viewport — keep completed
-            } else if (rect.top > window.innerHeight) {
-              // Section is below viewport — user scrolled back up past it, reset
-              this.completed = false;
-              this.scrollProgress = 0;
-              this.index = 0;
-              this.applyProgress();
-              this.render();
-            }
-          }
-        });
-      }, { threshold: 0.15 });
-      this.observer.observe(this.shell);
-
-      // Hijack wheel events on the whole window
-      window.addEventListener("wheel", this.onWheel, { passive: false });
-      // Touch support
-      window.addEventListener("touchstart", this.onTouchStart, { passive: true });
-      window.addEventListener("touchmove", this.onTouchMove, { passive: false });
-    }
-
-    onTouchStart(e) {
-      this.touchStartY = e.touches[0].clientY;
-    }
-
-    onTouchMove(e) {
-      if (!this.isLocked) return;
-      const deltaY = this.touchStartY - e.touches[0].clientY;
-      this.touchStartY = e.touches[0].clientY;
-      if (Math.abs(deltaY) > 2) {
-        this.handleScrollDelta(deltaY, e);
-      }
-    }
-
-    onWheel(e) {
-      if (!this.isLocked) return;
-      this.handleScrollDelta(e.deltaY, e);
-    }
-
-    handleScrollDelta(deltaY, e) {
-      // Always prevent default while locked to stop page scroll
-      e.preventDefault();
-
-      // Scrolling down → advance through slides
-      if (deltaY > 0 && !this.completed) {
-        this.scrollProgress = Math.min(1, this.scrollProgress + Math.abs(deltaY) / 500);
-        this.applyProgress();
-
-        if (this.scrollProgress >= 1) {
-          this.completed = true;
-          this.isLocked = false;
-        }
-      }
-      // Scrolling up → rewind through slides
-      else if (deltaY < 0 && this.scrollProgress > 0 && !this.completed) {
-        this.scrollProgress = Math.max(0, this.scrollProgress - Math.abs(deltaY) / 500);
-        this.applyProgress();
-
-        // If user rewinds to the very start, unlock so they can scroll up past the section
-        if (this.scrollProgress <= 0) {
-          this.isLocked = false;
-          // Re-lock if they scroll down into it again via the observer
-        }
-      }
-    }
-
-    applyProgress() {
-      const nextIndex = Math.min(ERAS.length - 1, Math.floor(this.scrollProgress * ERAS.length));
-      this.updateProgress(this.scrollProgress, nextIndex);
-
-      if (nextIndex !== this.index) {
-        this.index = nextIndex;
-        this.render();
-      }
+      this.visibilityObserver = new IntersectionObserver(([entry]) => {
+        this.isVisible = !!entry?.isIntersecting;
+      }, { threshold: 0.05 });
+      this.visibilityObserver.observe(this.shell);
     }
 
     mountScene() {
@@ -205,43 +132,35 @@
       const width = this.canvas.clientWidth || this.root.clientWidth;
       const height = this.canvas.clientHeight || this.root.clientHeight || 680;
       const scene = new THREE.Scene();
-
       const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
       camera.position.set(6, 3.5, 8);
       camera.lookAt(0, 0.5, 0);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(this.getPixelRatio());
       renderer.setSize(width, height);
-      renderer.setClearColor(0x000000, 0); // transparent to show CSS background
+      renderer.setClearColor(0x000000, 0);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.1;
+      renderer.toneMappingExposure = 1.05;
       this.canvas.appendChild(renderer.domElement);
 
-      // Bright studio lighting for white theme
       scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-      const key = new THREE.DirectionalLight(0xfff5e8, 1.6);
+      const key = new THREE.DirectionalLight(0xfff5e8, 1.35);
       key.position.set(8, 10, 6);
-      key.castShadow = true;
       scene.add(key);
-      const rim = new THREE.DirectionalLight(0xc8d8f0, 0.9);
+      const rim = new THREE.DirectionalLight(0xc8d8f0, 0.7);
       rim.position.set(-6, 4, -4);
       scene.add(rim);
-      const fill = new THREE.PointLight(0xff8c3a, 0.8, 20);
+      const fill = new THREE.PointLight(0xff8c3a, 0.55, 16);
       fill.position.set(0, 2, 5);
       scene.add(fill);
-      const bottom = new THREE.PointLight(0x4488ff, 0.3, 15);
-      bottom.position.set(0, -2, 0);
-      scene.add(bottom);
 
-      // Subtle shadow floor
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(40, 40),
         new THREE.MeshStandardMaterial({ color: 0xe8ecf2, roughness: 0.95, metalness: 0.02 })
       );
       floor.rotation.x = -Math.PI / 2;
       floor.position.y = -1.5;
-      floor.receiveShadow = true;
       scene.add(floor);
 
       const group = new THREE.Group();
@@ -256,7 +175,7 @@
         copper: new THREE.MeshStandardMaterial({ color: 0xe08838, roughness: 0.3, metalness: 0.92 })
       };
 
-      const state = { kind: "steam", pistons: [], spinners: [], steam: [], rotor: null, disposable: [] };
+      const state = { kind: "steam", pistons: [], spinners: [], glows: [], rotor: null, disposable: [] };
       const glow = () => {
         const material = new THREE.MeshBasicMaterial({ color: 0xff9944, transparent: true, opacity: 0.5 });
         state.disposable.push(material);
@@ -271,7 +190,7 @@
         group.clear();
         state.pistons = [];
         state.spinners = [];
-        state.steam = [];
+        state.glows = [];
         state.rotor = null;
       };
 
@@ -285,42 +204,44 @@
 
       const clock = new THREE.Clock();
       const animate = () => {
+        this.sceneState.rafId = window.requestAnimationFrame(animate);
+        if (document.hidden || !this.isVisible) return;
+
         const t = clock.getElapsedTime();
         group.rotation.y += (this.targetRotY - group.rotation.y) * 0.05;
 
         if (state.kind === "steam") {
-          state.spinners.forEach((wheel) => { wheel.rotation.z = -t * 1.8; });
-          state.pistons.forEach((rod) => { rod.position.x = 2.4 + Math.cos(t * 1.8) * 0.35; });
-          state.steam.forEach((puff, index) => {
-            const phase = (t * 0.6 + index * 0.4) % 2.5;
-            puff.position.y = 2.1 + phase * 0.5;
-            puff.scale.setScalar(1 + phase * 0.4);
-            puff.material.opacity = Math.max(0, 0.5 - phase * 0.2);
+          state.spinners.forEach((wheel) => { wheel.rotation.z = -t * 1.6; });
+          state.pistons.forEach((rod) => { rod.position.x = 2.35 + Math.cos(t * 1.6) * 0.3; });
+          state.glows.forEach((puff, index) => {
+            const phase = (t * 0.55 + index * 0.4) % 2.5;
+            puff.position.y = 2.05 + phase * 0.45;
+            puff.scale.setScalar(1 + phase * 0.35);
+            puff.material.opacity = Math.max(0, 0.48 - phase * 0.18);
           });
         } else if (state.kind === "ic") {
           state.pistons.forEach((piston) => {
-            piston.position.y = piston.userData.baseY + Math.sin(t * 8 + piston.userData.phase) * 0.18;
+            piston.position.y = piston.userData.baseY + Math.sin(t * 7 + piston.userData.phase) * 0.16;
           });
-          state.spinners.forEach((part) => { part.rotation.x = t * 8; });
-          state.steam.forEach((spark, index) => {
-            const fire = (Math.sin(t * 8 + index * (Math.PI / 2)) + 1) * 0.5;
-            spark.material.opacity = fire * 0.9;
-            spark.scale.setScalar(0.8 + fire * 1.2);
+          state.spinners.forEach((part) => { part.rotation.x = t * 7; });
+          state.glows.forEach((spark, index) => {
+            const fire = (Math.sin(t * 7 + index * (Math.PI / 2)) + 1) * 0.5;
+            spark.material.opacity = fire * 0.85;
+            spark.scale.setScalar(0.8 + fire);
           });
         } else if (state.rotor) {
-          const rotation = t * 1.2;
+          const rotation = t;
           state.rotor.rotation.z = rotation;
-          state.rotor.position.x = Math.cos(rotation * 3) * 0.18;
-          state.rotor.position.y = 0.3 + Math.sin(rotation * 3) * 0.18;
-          state.steam.forEach((core) => {
-            const pulse = (Math.sin(t * 4) + 1) * 0.5;
-            core.scale.setScalar(0.8 + pulse * 0.5);
-            core.material.opacity = 0.5 + pulse * 0.4;
+          state.rotor.position.x = Math.cos(rotation * 3) * 0.16;
+          state.rotor.position.y = 0.3 + Math.sin(rotation * 3) * 0.16;
+          state.glows.forEach((core) => {
+            const pulse = (Math.sin(t * 3.5) + 1) * 0.5;
+            core.scale.setScalar(0.8 + pulse * 0.45);
+            core.material.opacity = 0.45 + pulse * 0.35;
           });
         }
 
         renderer.render(scene, camera);
-        this.sceneState.rafId = window.requestAnimationFrame(animate);
       };
 
       this.sceneState = { camera, renderer, build, rafId: 0 };
@@ -329,44 +250,41 @@
     }
 
     buildSteam(group, mats, state, glow) {
-      const boiler = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 3.1, 28), mats.iron);
+      const boiler = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 3.05, 22), mats.iron);
       boiler.rotation.z = Math.PI / 2;
       boiler.position.y = 0.2;
       group.add(boiler);
 
-      const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 1.5, 16), mats.iron);
-      stack.position.set(-1.25, 1.35, 0);
+      const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 1.45, 14), mats.iron);
+      stack.position.set(-1.25, 1.32, 0);
       group.add(stack);
 
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(0.34, 14, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-        mats.brass
-      );
-      dome.position.set(0.2, 1.25, 0);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2), mats.brass);
+      dome.position.set(0.2, 1.24, 0);
       group.add(dome);
 
-      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 12), mats.steel);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 10), mats.steel);
       rod.rotation.z = Math.PI / 2;
-      rod.position.set(2.4, -0.2, 0.45);
+      rod.position.set(2.35, -0.2, 0.45);
       group.add(rod);
       state.pistons.push(rod);
 
       const wheel = new THREE.Group();
-      wheel.position.set(2.1, -0.45, 0.45);
-      wheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.12, 10, 28), mats.iron));
+      wheel.position.set(2.05, -0.45, 0.45);
+      wheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.12, 8, 22), mats.iron));
       for (let i = 0; i < 8; i += 1) {
-        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.42, 0.06), mats.steel);
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.4, 0.06), mats.steel);
         spoke.rotation.z = (i / 8) * Math.PI * 2;
         wheel.add(spoke);
       }
       group.add(wheel);
       state.spinners.push(wheel);
 
-      for (let i = 0; i < 5; i += 1) {
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(0.18 + Math.random() * 0.08, 10, 10), glow());
+      for (let i = 0; i < 4; i += 1) {
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(0.18 + Math.random() * 0.06, 9, 9), glow());
         puff.position.set(-1.25, 2.1 + i * 0.2, (Math.random() - 0.5) * 0.18);
         group.add(puff);
-        state.steam.push(puff);
+        state.glows.push(puff);
       }
     }
 
@@ -374,37 +292,35 @@
       const block = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.4, 1.6), mats.dark);
       block.position.y = 0.1;
       group.add(block);
-
-      const head = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.35, 1.7), mats.steel);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.35, 1.65), mats.steel);
       head.position.y = 0.98;
       group.add(head);
-
-      const cover = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.25, 1.4), mats.accent);
+      const cover = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.25, 1.35), mats.accent);
       cover.position.y = 1.28;
       group.add(cover);
 
       for (let i = 0; i < 4; i += 1) {
         const x = -0.9 + i * 0.6;
-        const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.4, 16), mats.brass);
+        const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.4, 14), mats.brass);
         piston.position.set(x, 1.55, 0);
         piston.userData.baseY = 1.55;
         piston.userData.phase = i * (Math.PI / 2);
         group.add(piston);
         state.pistons.push(piston);
 
-        const spark = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), glow());
+        const spark = new THREE.Mesh(new THREE.SphereGeometry(0.05, 7, 7), glow());
         spark.position.set(x, 1.9, 0);
         group.add(spark);
-        state.steam.push(spark);
+        state.glows.push(spark);
       }
 
-      const crank = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.5, 16), mats.copper);
+      const crank = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.45, 14), mats.copper);
       crank.rotation.z = Math.PI / 2;
       crank.position.y = -0.7;
       group.add(crank);
       state.spinners.push(crank);
 
-      const flywheel = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.18, 30), mats.iron);
+      const flywheel = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.18, 24), mats.iron);
       flywheel.rotation.z = Math.PI / 2;
       flywheel.position.set(1.55, -0.7, 0);
       group.add(flywheel);
@@ -412,16 +328,16 @@
     }
 
     buildModern(group, mats, state, glow) {
-      const housing = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 1.1, 40), mats.dark);
+      const housing = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 1.1, 28), mats.dark);
       housing.rotation.x = Math.PI / 2;
       housing.position.y = 0.3;
       group.add(housing);
 
-      const frontRim = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 12, 40), mats.accent);
+      const frontRim = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 10, 28), mats.accent);
       frontRim.position.set(0, 0.3, 0.55);
       group.add(frontRim);
 
-      const rearRim = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 12, 40), mats.accent);
+      const rearRim = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.06, 10, 28), mats.accent);
       rearRim.position.set(0, 0.3, -0.55);
       group.add(rearRim);
 
@@ -432,32 +348,29 @@
       });
       triangle.closePath();
 
-      const rotor = new THREE.Mesh(
-        new THREE.ExtrudeGeometry(triangle, {
-          depth: 0.92,
-          bevelEnabled: true,
-          bevelSize: 0.08,
-          bevelThickness: 0.08,
-          bevelSegments: 3
-        }),
-        mats.accent
-      );
+      const rotor = new THREE.Mesh(new THREE.ExtrudeGeometry(triangle, {
+        depth: 0.92,
+        bevelEnabled: true,
+        bevelSize: 0.08,
+        bevelThickness: 0.08,
+        bevelSegments: 2
+      }), mats.accent);
       rotor.geometry.center();
       rotor.position.set(0, 0.3, 0);
       group.add(rotor);
       state.rotor = rotor;
 
       for (let i = 0; i < 5; i += 1) {
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.04, 8, 28), mats.copper);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.04, 7, 20), mats.copper);
         ring.position.set(-2 + i * 0.06, 0.3, 0);
         ring.rotation.y = Math.PI / 2;
         group.add(ring);
       }
 
-      const core = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), glow());
+      const core = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), glow());
       core.position.set(-2, 0.3, 0);
       group.add(core);
-      state.steam.push(core);
+      state.glows.push(core);
 
       const base = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.15, 1.5), mats.dark);
       base.position.y = -0.5;
@@ -465,14 +378,33 @@
     }
 
     onResize() {
-      // No dynamic shell height needed — we lock scroll via JS, not sticky
+      const stageHeight = this.root.offsetHeight || 680;
+      const perEraScroll = Math.max(Math.round(window.innerHeight * 0.75), 380);
+      this.shell.style.height = `${stageHeight + perEraScroll * (ERAS.length - 1)}px`;
+
       if (this.sceneState) {
         const width = this.canvas.clientWidth || this.root.clientWidth;
         const height = this.canvas.clientHeight || this.root.clientHeight || 680;
         this.sceneState.camera.aspect = width / height;
         this.sceneState.camera.updateProjectionMatrix();
+        this.sceneState.renderer.setPixelRatio(this.getPixelRatio());
         this.sceneState.renderer.setSize(width, height);
       }
+
+      this.onScroll();
+    }
+
+    onScroll() {
+      if (this.scrollFrame) return;
+      this.scrollFrame = window.requestAnimationFrame(() => {
+        this.scrollFrame = 0;
+        const totalScrollable = Math.max(this.shell.offsetHeight - this.root.offsetHeight, 1);
+        const rect = this.shell.getBoundingClientRect();
+        const stickyTop = this.getStickyTop();
+        const scrolled = Math.min(Math.max(stickyTop - rect.top, 0), totalScrollable);
+        this.progress = totalScrollable > 0 ? scrolled / totalScrollable : 0;
+        this.applyProgress();
+      });
     }
 
     onMove(event) {
@@ -492,6 +424,15 @@
       this.sceneState.camera.lookAt(0, 0.5, 0);
     }
 
+    applyProgress() {
+      const nextIndex = Math.min(ERAS.length - 1, Math.floor(this.progress * ERAS.length));
+      this.updateProgress(this.progress, nextIndex);
+      if (nextIndex !== this.index || this.index === -1) {
+        this.index = nextIndex;
+        this.render();
+      }
+    }
+
     updateProgress(progress, activeIndex) {
       if (this.progressFillEl) {
         this.progressFillEl.style.transform = `scaleX(${Math.max(progress, 0)})`;
@@ -500,16 +441,14 @@
         this.stepEl.textContent = `Chapter ${activeIndex + 1} / ${ERAS.length}`;
       }
       if (this.statusEl) {
-        if (progress >= 0.999) {
-          this.statusEl.textContent = "Full history unlocked. Continue scrolling.";
-        } else {
-          this.statusEl.textContent = `Scroll to reveal chapter ${Math.min(activeIndex + 2, ERAS.length)}.`;
-        }
+        this.statusEl.textContent = progress >= 0.999
+          ? "Full history unlocked. Keep scrolling to continue."
+          : `Keep scrolling to reveal chapter ${Math.min(activeIndex + 2, ERAS.length)}.`;
       }
       if (this.hintEl) {
         this.hintEl.textContent = progress >= 0.999
-          ? "✓ History complete — scroll to continue"
-          : "↓ Keep scrolling to unlock the full engine history";
+          ? "Full history revealed. Scroll to continue."
+          : "Keep scrolling to unlock the full engine history";
       }
 
       Array.from(this.dotsEl.children).forEach((dot, index) => {
@@ -561,10 +500,7 @@
       });
 
       this.renderEvents(current.events);
-
-      if (this.sceneState) {
-        this.sceneState.build(current.engine);
-      }
+      if (this.sceneState) this.sceneState.build(current.engine);
     }
   }
 

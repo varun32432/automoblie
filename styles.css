@@ -1201,7 +1201,8 @@ section h4 {
 }
 
 .engine-history-stage {
-    position: relative;
+    position: sticky;
+    top: 24px;
     height: 680px;
     border-radius: 28px;
     overflow: hidden;
@@ -1888,6 +1889,7 @@ section h4 {
     }
 
     .engine-history-stage {
+        top: 16px;
         height: 980px;
         border-radius: 22px;
     }
@@ -2052,6 +2054,7 @@ section h4 {
     }
 
     .engine-history-stage {
+        top: 12px;
         height: 1060px;
         border-radius: 20px;
     }

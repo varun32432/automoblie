@@ -3,8 +3,15 @@ let scene3d,camera3d,renderer3d,engine3dGroup,is3dRunning=false,isXRay=false,cra
 let pistons3d=[],conRods3d=[],sparkPlugs3d=[],cylWalls3d=[],sparkLights3d=[],shellParts3d=[];
 let mouseDown=false,mouseX=0,mouseY=0,rotX=0.3,rotY=-0.5;
 let currentRPM=800;
+let is3DVisible=true,needs3DRender=true;
+let ui3d={};
 const firingOrder3d=[1,5,4,8,6,3,7,2];
 const BP_LINE=0xc8b88a, BP_DIM=0x8a7e5e, BP_BG=0xdfe4ea;
+
+function get3DPixelRatio(){
+  return Math.min(window.devicePixelRatio||1, window.innerWidth<=768?1.2:1.5);
+}
+function mark3DDirty(){needs3DRender=true;}
 
 // Solid materials — declared here, initialised inside initMaterials() once THREE is ready
 let matBlock,matCastAlum,matAlum,matDark,matChrome,matExhaust,matValveCover,matCoverTrim,matRubber,matPiston,matRod,matSpark;
@@ -161,18 +168,19 @@ function init3DEngine(){
   camera3d=new THREE.PerspectiveCamera(38,w/h,0.1,500);
   camera3d.position.set(5.5,7.5,22);camera3d.lookAt(0,1.5,0);
   renderer3d=new THREE.WebGLRenderer({antialias:true,alpha:true});
-  renderer3d.setSize(w,h);renderer3d.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer3d.setSize(w,h);renderer3d.setPixelRatio(get3DPixelRatio());
   renderer3d.outputEncoding=THREE.sRGBEncoding;
   c.appendChild(renderer3d.domElement);
 
   // Softer studio lighting for more natural surfaces.
   scene3d.add(new THREE.AmbientLight(0xf2f5f8,0.55));
   scene3d.add(new THREE.HemisphereLight(0xf8f2ea,0x9098a4,1.15));
-  const key=new THREE.DirectionalLight(0xfff3e4,1.85);key.position.set(14,20,12);key.castShadow=true;key.shadow.mapSize.set(2048,2048);scene3d.add(key);
+  const useHighQualityShadows=window.innerWidth>640;
+  const key=new THREE.DirectionalLight(0xfff3e4,1.85);key.position.set(14,20,12);key.castShadow=useHighQualityShadows;if(useHighQualityShadows)key.shadow.mapSize.set(window.innerWidth<=1024?1024:1536,window.innerWidth<=1024?1024:1536);scene3d.add(key);
   const fill=new THREE.DirectionalLight(0xd8e6f5,0.9);fill.position.set(-16,9,10);scene3d.add(fill);
   const rim=new THREE.DirectionalLight(0xcdd7e2,0.75);rim.position.set(-10,6,-16);scene3d.add(rim);
   const top=new THREE.PointLight(0xffffff,0.45,36);top.position.set(0,14,2);scene3d.add(top);
-  renderer3d.shadowMap.enabled=true;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer3d.shadowMap.enabled=useHighQualityShadows;renderer3d.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer3d.toneMapping=THREE.ACESFilmicToneMapping;renderer3d.toneMappingExposure=1.08;
 
   const floor=new THREE.Mesh(
@@ -195,17 +203,38 @@ function init3DEngine(){
   engine3dGroup=new THREE.Group();scene3d.add(engine3dGroup);
   engine3dGroup.position.y=-0.15;
   buildEngine();setupMouseControls(c);
-  document.querySelector('.animation-header h2').textContent='Interactive 3D V8 Engine';
-  document.querySelector('.animation-subtitle').textContent='Explore the engine in a softer studio view. Drag to orbit and scroll to zoom.';
-  document.getElementById('xrayBtn').textContent='X-Ray';
-  document.getElementById('play3dBtn').textContent='Resume';
-  document.querySelector('.hint-text').textContent='DRAG TO ORBIT / SCROLL TO ZOOM';
-  document.querySelector('.controls-3d .btn-primary').textContent='Play / Pause';
-  document.querySelector('.controls-3d .btn-secondary').textContent='Reset View';
-  document.getElementById('crankAngle3D').textContent='0 deg';
-  document.getElementById('firingCyl3D').textContent='-';
-  window.addEventListener('resize',()=>{const nw=c.clientWidth,nh=c.clientHeight;camera3d.aspect=nw/nh;camera3d.updateProjectionMatrix();renderer3d.setSize(nw,nh);});
+  ui3d={
+    title:document.querySelector('.animation-header h2'),
+    subtitle:document.querySelector('.animation-subtitle'),
+    xrayBtn:document.getElementById('xrayBtn'),
+    playBtn:document.getElementById('play3dBtn'),
+    hint:document.querySelector('.hint-text'),
+    playControl:document.querySelector('.controls-3d .btn-primary'),
+    resetControl:document.querySelector('.controls-3d .btn-secondary'),
+    crankAngle:document.getElementById('crankAngle3D'),
+    currentStroke:document.getElementById('currentStroke3D'),
+    strokeDesc:document.getElementById('strokeDesc3D'),
+    firingCylinder:document.getElementById('firingCyl3D'),
+    rpmReadout:document.getElementById('rpm3D'),
+    progress:document.getElementById('progress3D'),
+    rpmValue:document.getElementById('rpmValue'),
+    rpmSlider:document.getElementById('rpmSlider')
+  };
+  ui3d.title.textContent='Interactive 3D V8 Engine';
+  ui3d.subtitle.textContent='Explore the engine in a softer studio view. Drag to orbit and scroll to zoom.';
+  ui3d.xrayBtn.textContent='X-Ray';
+  ui3d.playBtn.textContent='Resume';
+  ui3d.hint.textContent='DRAG TO ORBIT / SCROLL TO ZOOM';
+  ui3d.playControl.textContent='Play / Pause';
+  ui3d.resetControl.textContent='Reset View';
+  ui3d.crankAngle.textContent='0 deg';
+  ui3d.firingCylinder.textContent='-';
+  const resize3D=()=>{const nw=c.clientWidth,nh=c.clientHeight;camera3d.aspect=nw/nh;camera3d.updateProjectionMatrix();renderer3d.setPixelRatio(get3DPixelRatio());renderer3d.setSize(nw,nh);initRPMGauge();updateRPMGauge();mark3DDirty();};
+  window.addEventListener('resize',resize3D);
+  const visibilityObserver=new IntersectionObserver(([entry])=>{is3DVisible=!!entry?.isIntersecting;if(is3DVisible)mark3DDirty();},{threshold:0.05});
+  visibilityObserver.observe(c);
   initRPMGauge();
+  updateRPMGauge();
   animate3D();
 }
 
@@ -484,11 +513,20 @@ let fireGlow,defSpk;
 
 function animate3D(){
   requestAnimationFrame(animate3D);
+  if(!renderer3d||!scene3d||!camera3d||!engine3dGroup)return;
+  if(document.hidden||!is3DVisible)return;
   if(is3dRunning){
     speed3d=currentRPM/1000;
     crankAngle3d+=0.02*speed3d;
     updatePistons();updateInfoPanel();
+  }else if(!needs3DRender){
+    return;
   }
+  engine3dGroup.rotation.y=rotY;engine3dGroup.rotation.x=rotX;
+  if(ui3d.crankAngle)ui3d.crankAngle.textContent=Math.floor(((crankAngle3d*180/Math.PI)%360+360)%360)+' deg';
+  renderer3d.render(scene3d,camera3d);
+  needs3DRender=is3dRunning;
+  return;
   engine3dGroup.rotation.y=rotY;engine3dGroup.rotation.x=rotX;
   document.getElementById('crankAngle3D').textContent=Math.floor(((crankAngle3d*180/Math.PI)%360+360)%360)+'°';
   updateRPMGauge();
@@ -509,14 +547,29 @@ function updatePistons(){
     // Spark glow
     const sp=((phase%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
     const firing=sp>Math.PI*0.85&&sp<Math.PI*1.15;
-    sparkPlugs3d[i].mesh.material=firing?fireGlow:defSpk;
-    sparkPlugs3d[i].cap.material=firing?fireGlow:defSpk;
-    sparkLights3d[i].intensity=firing?3.0:0;
-    sparkLights3d[i].color.set(firing?0xff5500:0x000000);
+    const spark=sparkPlugs3d[i];
+    const activeMaterial=firing?fireGlow:defSpk;
+    if(spark.mesh.material!==activeMaterial)spark.mesh.material=activeMaterial;
+    if(spark.cap.material!==activeMaterial)spark.cap.material=activeMaterial;
+    const sparkLight=sparkLights3d[i];
+    sparkLight.intensity=firing?3.0:0;
+    sparkLight.color.set(firing?0xff5500:0x000000);
   }
 }
 
 function updateInfoPanel(){
+  const strokeNames=['Intake','Compression','Power','Exhaust'];
+  const cycleProgress=((crankAngle3d/(Math.PI*2))%1+1)%1;
+  const firingIndex=Math.floor(cycleProgress*8)%8;
+  const strokeIndex=Math.floor(cycleProgress*32)%4;
+  const strokeDescriptions=['Piston down - drawing the fuel-air mix in.','Piston up - compressing the mixture.','Spark! Combustion drives the piston down and makes power.','Piston up - pushing burnt gases out.'];
+  const setText=(el,text)=>{if(el&&el.textContent!==String(text))el.textContent=String(text);};
+  setText(ui3d.currentStroke,strokeNames[strokeIndex]);
+  setText(ui3d.strokeDesc,strokeDescriptions[strokeIndex]);
+  setText(ui3d.firingCylinder,firingOrder3d[firingIndex]);
+  setText(ui3d.rpmReadout,currentRPM);
+  setText(ui3d.progress,Math.floor(cycleProgress*100));
+  return;
   const sn=['Intake','Compression','Power','Exhaust'];
   const sd=['Piston down — drawing fuel-air mixture in.','Piston up — compressing the mixture.','SPARK! Explosion forces piston down — POWER!','Piston up — pushing burnt gases out.'];
   const cp=((crankAngle3d/(Math.PI*2))%1+1)%1,ci=Math.floor(cp*8)%8,si=Math.floor(cp*32)%4;
@@ -528,7 +581,7 @@ function updateInfoPanel(){
   $('progress3D').textContent=Math.floor(cp*100);
 }
 
-function toggleXRay(){isXRay=!isXRay;document.getElementById('xrayBtn').classList.toggle('xray-active');
+function toggleXRay(){isXRay=!isXRay;if(ui3d.xrayBtn)ui3d.xrayBtn.classList.toggle('xray-active');
   shellParts3d.forEach(m=>{
     const baseOpacity=m.userData.baseOpacity!==undefined?m.userData.baseOpacity:1;
     const baseTransparent=!!m.userData.baseTransparent||baseOpacity<1;
@@ -536,7 +589,7 @@ function toggleXRay(){isXRay=!isXRay;document.getElementById('xrayBtn').classLis
     m.material.opacity=isXRay?Math.min(0.12,Math.max(0.04,baseOpacity*0.35)):baseOpacity;
     m.material.depthWrite=!isXRay;
     m.material.needsUpdate=true;
-  });}
+  });mark3DDirty();}
 function togglePlay3D(){is3dRunning=!is3dRunning;const b=document.getElementById('play3dBtn');
 b.textContent=is3dRunning?'⏸ Pause':'▶ Resume';b.classList.toggle('active-pause',is3dRunning);}
 function reset3D(){is3dRunning=false;crankAngle3d=0;rotX=0.3;rotY=-0.5;currentRPM=800;
@@ -668,3 +721,233 @@ function setupMouseControls(c){
   c.addEventListener('touchmove',e=>{if(!mouseDown)return;rotY+=(e.touches[0].clientX-mouseX)*0.005;rotX=Math.max(-1.2,Math.min(1.2,rotX+(e.touches[0].clientY-mouseY)*0.005));mouseX=e.touches[0].clientX;mouseY=e.touches[0].clientY;});
   c.addEventListener('touchend',()=>mouseDown=false);
 }
+
+// Performance-tuned overrides
+function animate3D(){
+  requestAnimationFrame(animate3D);
+  if(!renderer3d||!scene3d||!camera3d||!engine3dGroup)return;
+  if(document.hidden||!is3DVisible)return;
+
+  if(is3dRunning){
+    speed3d=currentRPM/1000;
+    crankAngle3d+=0.02*speed3d;
+    updatePistons();
+    updateInfoPanel();
+  }else if(!needs3DRender){
+    return;
+  }
+
+  engine3dGroup.rotation.y=rotY;
+  engine3dGroup.rotation.x=rotX;
+  if(ui3d.crankAngle)ui3d.crankAngle.textContent=Math.floor(((crankAngle3d*180/Math.PI)%360+360)%360)+' deg';
+  renderer3d.render(scene3d,camera3d);
+  needs3DRender=is3dRunning;
+}
+
+function updateInfoPanel(){
+  const strokeNames=['Intake','Compression','Power','Exhaust'];
+  const cycleProgress=((crankAngle3d/(Math.PI*2))%1+1)%1;
+  const firingIndex=Math.floor(cycleProgress*8)%8;
+  const strokeIndex=Math.floor(cycleProgress*32)%4;
+  const strokeDescriptions=['Piston down - drawing the fuel-air mix in.','Piston up - compressing the mixture.','Spark! Combustion drives the piston down and makes power.','Piston up - pushing burnt gases out.'];
+  const setText=(el,text)=>{if(el&&el.textContent!==String(text))el.textContent=String(text);};
+  setText(ui3d.currentStroke,strokeNames[strokeIndex]);
+  setText(ui3d.strokeDesc,strokeDescriptions[strokeIndex]);
+  setText(ui3d.firingCylinder,firingOrder3d[firingIndex]);
+  setText(ui3d.rpmReadout,currentRPM);
+  setText(ui3d.progress,Math.floor(cycleProgress*100));
+}
+
+function toggleXRay(){
+  isXRay=!isXRay;
+  if(ui3d.xrayBtn)ui3d.xrayBtn.classList.toggle('xray-active');
+  shellParts3d.forEach(m=>{
+    const baseOpacity=m.userData.baseOpacity!==undefined?m.userData.baseOpacity:1;
+    const baseTransparent=!!m.userData.baseTransparent||baseOpacity<1;
+    m.material.transparent=isXRay||baseTransparent;
+    m.material.opacity=isXRay?Math.min(0.12,Math.max(0.04,baseOpacity*0.35)):baseOpacity;
+    m.material.depthWrite=!isXRay;
+    m.material.needsUpdate=true;
+  });
+  mark3DDirty();
+}
+
+function togglePlay3D(){
+  is3dRunning=!is3dRunning;
+  if(ui3d.playBtn){
+    ui3d.playBtn.textContent=is3dRunning?'Pause':'Resume';
+    ui3d.playBtn.classList.toggle('active-pause',is3dRunning);
+  }
+  mark3DDirty();
+}
+
+function reset3D(){
+  is3dRunning=false;
+  crankAngle3d=0;
+  rotX=0.3;
+  rotY=-0.5;
+  currentRPM=800;
+  if(ui3d.rpmSlider)ui3d.rpmSlider.value=800;
+  if(ui3d.playBtn){
+    ui3d.playBtn.textContent='Resume';
+    ui3d.playBtn.classList.remove('active-pause');
+  }
+  if(ui3d.currentStroke)ui3d.currentStroke.textContent='Idle';
+  if(ui3d.strokeDesc)ui3d.strokeDesc.textContent='Press Play to start.';
+  if(ui3d.firingCylinder)ui3d.firingCylinder.textContent='-';
+  if(ui3d.rpmReadout)ui3d.rpmReadout.textContent='0';
+  if(ui3d.progress)ui3d.progress.textContent='0';
+  if(ui3d.rpmValue)ui3d.rpmValue.textContent='800 rpm';
+  if(ui3d.crankAngle)ui3d.crankAngle.textContent='0 deg';
+  updatePistons();
+  updateRPMGauge();
+  mark3DDirty();
+}
+
+function setRPM(val){
+  currentRPM=parseInt(val,10);
+  if(ui3d.rpmValue)ui3d.rpmValue.textContent=currentRPM.toLocaleString()+' rpm';
+  if(!is3dRunning&&ui3d.rpmReadout)ui3d.rpmReadout.textContent=currentRPM;
+  updateRPMGauge();
+  mark3DDirty();
+}
+
+function initRPMGauge(){
+  rpmCanvas=document.getElementById('rpmGauge');
+  if(!rpmCanvas)return;
+  rpmCtx=rpmCanvas.getContext('2d');
+  const rect=rpmCanvas.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  const dpr=get3DPixelRatio();
+  rpmCanvas.width=Math.round(rect.width*dpr);
+  rpmCanvas.height=Math.round(rect.height*dpr);
+  rpmCanvas.style.width=rect.width+'px';
+  rpmCanvas.style.height=rect.height+'px';
+  rpmCtx.setTransform(1,0,0,1,0,0);
+  rpmCtx.scale(dpr,dpr);
+}
+
+function updateRPMGauge(){
+  if(!rpmCtx||!rpmCanvas)return;
+  const w=rpmCanvas.clientWidth||400;
+  const h=rpmCanvas.clientHeight||300;
+  const cx=w/2,cy=h*0.52;
+  const radius=Math.min(w,h)*0.42;
+  const startAngle=0.75*Math.PI;
+  const sweep=1.5*Math.PI;
+  const maxRPM=8000;
+
+  rpmCtx.clearRect(0,0,w,h);
+
+  rpmCtx.beginPath();rpmCtx.arc(cx,cy,radius,0,Math.PI*2);
+  rpmCtx.strokeStyle='rgba(200,210,220,0.12)';rpmCtx.lineWidth=2;rpmCtx.stroke();
+
+  rpmCtx.beginPath();rpmCtx.arc(cx,cy,radius*0.97,0,Math.PI*2);
+  rpmCtx.strokeStyle='rgba(200,210,220,0.06)';rpmCtx.lineWidth=1;rpmCtx.stroke();
+
+  const redStart=startAngle+(6000/maxRPM)*sweep;
+  rpmCtx.beginPath();rpmCtx.arc(cx,cy,radius*0.96,redStart,startAngle+sweep);
+  rpmCtx.strokeStyle='rgba(255,60,60,0.25)';rpmCtx.lineWidth=8;rpmCtx.stroke();
+
+  for(let i=0;i<=8;i++){
+    const frac=i/8;
+    const angle=startAngle+frac*sweep;
+    const cos=Math.cos(angle),sin=Math.sin(angle);
+    const inR=radius*0.82,outR=radius*0.95;
+    rpmCtx.beginPath();
+    rpmCtx.moveTo(cx+cos*inR,cy+sin*inR);
+    rpmCtx.lineTo(cx+cos*outR,cy+sin*outR);
+    rpmCtx.strokeStyle=i>=6?'rgba(255,80,80,0.8)':'rgba(150,165,185,0.7)';
+    rpmCtx.lineWidth=2.5;
+    rpmCtx.stroke();
+
+    const textRadius=radius*0.7;
+    rpmCtx.font='bold 16px "Courier New",monospace';
+    rpmCtx.fillStyle=i>=6?'rgba(255,100,100,0.9)':'rgba(190,200,215,0.85)';
+    rpmCtx.textAlign='center';
+    rpmCtx.textBaseline='middle';
+    rpmCtx.fillText(i.toString(),cx+cos*textRadius,cy+sin*textRadius);
+  }
+
+  for(let i=0;i<80;i++){
+    if(i%10===0)continue;
+    const frac=i/80;
+    const angle=startAngle+frac*sweep;
+    const cos=Math.cos(angle),sin=Math.sin(angle);
+    const inR=i%5===0?radius*0.87:radius*0.90;
+    const outR=radius*0.95;
+    rpmCtx.beginPath();
+    rpmCtx.moveTo(cx+cos*inR,cy+sin*inR);
+    rpmCtx.lineTo(cx+cos*outR,cy+sin*outR);
+    rpmCtx.strokeStyle=frac>=0.75?'rgba(255,80,80,0.3)':'rgba(120,130,150,0.3)';
+    rpmCtx.lineWidth=1;
+    rpmCtx.stroke();
+  }
+
+  const needleFrac=Math.min(currentRPM/maxRPM,1);
+  const needleAngle=startAngle+needleFrac*sweep;
+  const needleLen=radius*0.65;
+  rpmCtx.beginPath();
+  rpmCtx.moveTo(cx+1,cy+1);
+  rpmCtx.lineTo(cx+1+Math.cos(needleAngle)*needleLen,cy+1+Math.sin(needleAngle)*needleLen);
+  rpmCtx.strokeStyle='rgba(0,0,0,0.3)';
+  rpmCtx.lineWidth=3;
+  rpmCtx.stroke();
+
+  rpmCtx.beginPath();
+  rpmCtx.moveTo(cx,cy);
+  rpmCtx.lineTo(cx+Math.cos(needleAngle)*needleLen,cy+Math.sin(needleAngle)*needleLen);
+  rpmCtx.strokeStyle=needleFrac>=0.75?'rgba(255,100,100,0.9)':'rgba(210,215,225,0.85)';
+  rpmCtx.lineWidth=2;
+  rpmCtx.stroke();
+
+  rpmCtx.beginPath();
+  rpmCtx.arc(cx,cy,8,0,Math.PI*2);
+  rpmCtx.fillStyle='rgba(100,110,125,0.7)';
+  rpmCtx.fill();
+  rpmCtx.strokeStyle='rgba(160,170,185,0.4)';
+  rpmCtx.lineWidth=1;
+  rpmCtx.stroke();
+
+  rpmCtx.font='bold 42px "Courier New",monospace';
+  rpmCtx.fillStyle='rgba(220,225,235,0.92)';
+  rpmCtx.textAlign='center';
+  rpmCtx.textBaseline='middle';
+  rpmCtx.fillText(currentRPM.toLocaleString(),cx,cy+radius*0.38);
+  rpmCtx.font='13px "Courier New",monospace';
+  rpmCtx.fillStyle='rgba(140,150,170,0.65)';
+  rpmCtx.fillText('R P M x 1 0 0 0',cx,cy+radius*0.52);
+}
+
+function setupMouseControls(c){
+  c.addEventListener('mousedown',e=>{mouseDown=true;mouseX=e.clientX;mouseY=e.clientY;});
+  c.addEventListener('mousemove',e=>{
+    if(!mouseDown)return;
+    rotY+=(e.clientX-mouseX)*0.005;
+    rotX=Math.max(-1.2,Math.min(1.2,rotX+(e.clientY-mouseY)*0.005));
+    mouseX=e.clientX;
+    mouseY=e.clientY;
+    mark3DDirty();
+  });
+  c.addEventListener('mouseup',()=>mouseDown=false);
+  c.addEventListener('mouseleave',()=>mouseDown=false);
+  c.addEventListener('wheel',e=>{
+    e.preventDefault();
+    camera3d.position.z=Math.max(8,Math.min(35,camera3d.position.z+e.deltaY*0.01));
+    mark3DDirty();
+  },{passive:false});
+  c.addEventListener('touchstart',e=>{mouseDown=true;mouseX=e.touches[0].clientX;mouseY=e.touches[0].clientY;});
+  c.addEventListener('touchmove',e=>{
+    if(!mouseDown)return;
+    rotY+=(e.touches[0].clientX-mouseX)*0.005;
+    rotX=Math.max(-1.2,Math.min(1.2,rotX+(e.touches[0].clientY-mouseY)*0.005));
+    mouseX=e.touches[0].clientX;
+    mouseY=e.touches[0].clientY;
+    mark3DDirty();
+  });
+  c.addEventListener('touchend',()=>mouseDown=false);
+}
+
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)mark3DDirty();
+});
