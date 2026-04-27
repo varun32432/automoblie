@@ -373,28 +373,52 @@ body::before {
     .history-section {
         padding-bottom: 0 !important;
         margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
     }
     
     .animation-section {
         padding-top: 0 !important;
         margin-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
     }
     
     .engine-history-shell {
         margin-bottom: 0 !important;
+        margin-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    .engine-history-stage {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
     }
     
     .model3d-wrapper {
         margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     
     .animation-header {
         margin-top: 0 !important;
-        margin-bottom: 15px !important;
+        margin-bottom: 10px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     
     section {
-        padding: 15px 40px !important;
+        padding: 10px 40px !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .main-content {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
 }
 
