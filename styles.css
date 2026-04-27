@@ -368,6 +368,56 @@ body::before {
     }
 }
 
+/* Desktop-specific fixes for free space */
+@media (min-width: 769px) {
+    .history-section {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .animation-section {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    .engine-history-shell {
+        margin-bottom: 0 !important;
+    }
+    
+    .model3d-wrapper {
+        margin-top: 0 !important;
+    }
+    
+    .animation-header {
+        margin-top: 0 !important;
+        margin-bottom: 15px !important;
+    }
+    
+    section {
+        padding: 15px 40px !important;
+    }
+}
+
+/* Mobile Bridge */
+@media (max-width: 768px) {
+    .visual-bridge {
+        padding: 40px 20px;
+        margin: 30px 0;
+    }
+    
+    .bridge-icon {
+        font-size: 2.5em;
+    }
+    
+    .bridge-content h3 {
+        font-size: 1.4em;
+    }
+    
+    .bridge-content p {
+        font-size: 1em;
+    }
+}
+
 /* ========== MAIN CONTENT ========== */
 
 .main-content {
