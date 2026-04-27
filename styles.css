@@ -144,7 +144,7 @@ body::before {
 
     text-align: center;
 
-    background-image: url('./src/engine/image.webp');
+    background-image: url("./src/engine image.webp");
 
     background-size: cover;
 
