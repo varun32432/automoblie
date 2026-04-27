@@ -175,7 +175,7 @@ body::before {
     background: rgba(255, 255, 255, 0.72);
     border-radius: 28px;
     box-shadow: var(--shadow-large);
-    overflow: hidden;
+    clip-path: inset(0 round 28px);
     border: 1px solid rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(14px);
 }
@@ -647,8 +647,11 @@ section h4 {
 }
 
 #engine3dContainer {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    z-index: 1;
 }
 
 #engine3dContainer canvas {
@@ -754,6 +757,111 @@ section h4 {
     padding: 8px 16px;
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ========== ENGINE STATUS OVERLAY (right side of 3D view) ========== */
+.overlay-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    bottom: 20px;
+    width: 280px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 52px; /* clear the top-right buttons */
+    pointer-events: none;
+}
+
+.status-card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    pointer-events: auto;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.status-card:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.status-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot-stroke {
+    background: var(--accent-orange, #ff7d3a);
+    box-shadow: 0 0 6px rgba(255, 125, 58, 0.4);
+}
+
+.status-dot-engine {
+    background: #4a90d9;
+    box-shadow: 0 0 6px rgba(74, 144, 217, 0.4);
+}
+
+.status-card-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(24, 32, 42, 0.45);
+    font-weight: 700;
+}
+
+.status-card-value {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-forest, #18202a);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.status-card-desc {
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: rgba(24, 32, 42, 0.5);
+    margin: 0;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.status-row:first-of-type {
+    border-top: none;
+}
+
+.status-row-label {
+    font-size: 0.78rem;
+    color: rgba(24, 32, 42, 0.5);
+    font-weight: 500;
+}
+
+.status-row-value {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary-forest, #18202a);
+    font-variant-numeric: tabular-nums;
 }
 
 /* ========== RPM TACHOMETER PANEL ========== */
@@ -1081,6 +1189,386 @@ section h4 {
     color: var(--primary-forest);
 }
 
+/* ========== ENGINE HISTORY SECTION — WHITE THEME ========== */
+.history-section {
+    background: linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(235, 240, 248, 0.95) 100%);
+}
+
+.engine-history-shell {
+    position: relative;
+    margin-top: 28px;
+}
+
+.engine-history-stage {
+    position: relative;
+    height: 680px;
+    border-radius: 28px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 25% 30%, rgba(255, 140, 50, 0.06), transparent 40%),
+        radial-gradient(circle at 75% 20%, rgba(80, 160, 255, 0.06), transparent 40%),
+        linear-gradient(165deg, #ffffff 0%, #f5f7fb 40%, #edf1f7 100%);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.04),
+        0 24px 64px rgba(0, 0, 0, 0.08);
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    transition: box-shadow 0.4s ease;
+}
+
+.engine-history-stage:hover {
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        0 32px 80px rgba(0, 0, 0, 0.12);
+}
+
+.engine-history-stage:focus-visible {
+    outline: 2px solid rgba(255, 125, 58, 0.6);
+    outline-offset: 4px;
+}
+
+.engine-history-canvas,
+.engine-history-vignette,
+.engine-history-overlay {
+    position: absolute;
+    inset: 0;
+}
+
+.engine-history-canvas canvas {
+    display: block;
+}
+
+.engine-history-vignette {
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 42%, rgba(245, 248, 252, 0.92) 100%);
+}
+
+.engine-history-overlay {
+    color: var(--primary-forest, #18202a);
+}
+
+/* -- Progress Bar -- */
+.engine-history-progress {
+    position: absolute;
+    top: 24px;
+    left: 36px;
+    right: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.engine-history-progress-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.engine-history-progress-step,
+.engine-history-progress-status {
+    font-size: 0.62rem;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+}
+
+.engine-history-progress-step {
+    color: rgba(24, 32, 42, 0.65);
+    font-weight: 700;
+}
+
+.engine-history-progress-status {
+    color: rgba(24, 32, 42, 0.35);
+    text-align: right;
+}
+
+.engine-history-progress-track {
+    width: 100%;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.engine-history-progress-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #ff7d3a, #ffb347, #ff7d3a);
+    background-size: 200% 100%;
+    animation: progressShimmer 2.5s ease infinite;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+@keyframes progressShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* -- Left Panel (Text) -- */
+.engine-history-left {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50%;
+    height: calc(100% - 74px);
+    padding: 56px 36px 34px 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.engine-history-era {
+    margin-bottom: 8px;
+    font-size: 0.65rem;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: rgba(24, 32, 42, 0.4);
+    font-weight: 600;
+}
+
+.engine-history-num {
+    font-size: clamp(4.8rem, 9vw, 6.2rem);
+    line-height: 0.85;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.04);
+    letter-spacing: -0.08em;
+    -webkit-text-stroke: 1.5px rgba(255, 125, 58, 0.35);
+}
+
+.engine-history-title {
+    margin-top: 14px;
+    margin-bottom: 14px;
+    max-width: 14ch;
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary-forest, #18202a);
+    font-weight: 700;
+}
+
+.engine-history-desc {
+    max-width: 36ch;
+    font-size: 0.92rem;
+    line-height: 1.85;
+    color: rgba(24, 32, 42, 0.55);
+}
+
+/* -- Right Panel (Events) -- */
+.engine-history-right {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 46%;
+    height: calc(100% - 74px);
+    padding: 56px 34px 34px 26px;
+    display: flex;
+    align-items: center;
+    z-index: 3;
+}
+
+.engine-history-events {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.engine-history-event {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    transition: background 0.3s ease;
+}
+
+.engine-history-event:hover {
+    background: rgba(255, 125, 58, 0.04);
+    border-radius: 8px;
+    padding-left: 8px;
+    margin-left: -8px;
+}
+
+.engine-history-event-year {
+    min-width: 64px;
+    padding-top: 2px;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #e07828;
+    font-weight: 700;
+}
+
+.engine-history-event-body {
+    font-size: 0.9rem;
+    line-height: 1.78;
+    color: rgba(24, 32, 42, 0.58);
+}
+
+.engine-history-event-name {
+    color: var(--primary-forest, #18202a);
+    font-weight: 700;
+}
+
+/* -- Side Dots -- */
+.engine-history-dots {
+    position: absolute;
+    right: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.engine-history-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.1);
+    transition: all 0.35s ease;
+}
+
+.engine-history-dot.is-seen {
+    background: rgba(255, 125, 58, 0.4);
+}
+
+.engine-history-dot.is-active {
+    width: 4px;
+    height: 16px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ff7d3a, #ffb347);
+    box-shadow: 0 0 8px rgba(255, 125, 58, 0.3);
+}
+
+/* -- Scroll Hint -- */
+.engine-history-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: rgba(24, 32, 42, 0.25);
+    animation: historyHintPulse 2s ease-in-out infinite;
+    pointer-events: none;
+    text-align: center;
+    z-index: 5;
+}
+
+/* -- Bottom Nav Tabs -- */
+.engine-history-nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.engine-history-tab {
+    position: relative;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 16px 18px 16px 22px;
+    color: rgba(24, 32, 42, 0.28);
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    transition: color 0.35s ease, background 0.35s ease;
+    cursor: pointer;
+}
+
+.engine-history-tab:first-child {
+    border-left: 0;
+}
+
+.engine-history-tab::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff7d3a, #ffb347);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s cubic-bezier(.77, 0, .18, 1);
+}
+
+.engine-history-tab.is-seen {
+    color: rgba(24, 32, 42, 0.5);
+}
+
+.engine-history-tab.is-active {
+    color: var(--primary-forest, #18202a);
+    background: rgba(255, 125, 58, 0.05);
+}
+
+.engine-history-tab.is-active::before {
+    transform: scaleX(1);
+}
+
+.engine-history-tab-index {
+    margin-right: 10px;
+    opacity: 0.45;
+    color: #ff7d3a;
+}
+
+.engine-history-tab-label {
+    display: inline-block;
+}
+
+/* -- Animations -- */
+.history-fade-in {
+    animation: historyFadeIn 0.55s cubic-bezier(.22, 1, .36, 1);
+}
+
+.engine-history-fallback {
+    position: absolute;
+    inset: 24px;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: rgba(24, 32, 42, 0.7);
+    text-align: center;
+}
+
+@keyframes historyFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes historyHintPulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.85; }
+}
+
 /* ========== SUMMARY SECTION ========== */
 .summary-section {
     background: linear-gradient(180deg, rgba(235, 240, 246, 0.92) 0%, rgba(246, 248, 251, 0.88) 100%);
@@ -1143,6 +1631,24 @@ section h4 {
         grid-template-columns: 1fr;
     }
 
+    .overlay-status {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        padding-top: 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .status-card {
+        flex: 1;
+        min-width: 140px;
+    }
+
     .controls {
         flex-direction: column;
         gap: 10px;
@@ -1186,6 +1692,83 @@ section h4 {
         height: 400px;
     }
 
+    .engine-history-stage {
+        top: 16px;
+    }
+
+    .engine-history-progress {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
+
+    .engine-history-progress-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .engine-history-progress-status {
+        text-align: left;
+    }
+
+    .engine-history-stage {
+        height: 920px;
+    }
+
+    .engine-history-left {
+        left: 16px;
+        right: 16px;
+        width: auto;
+        height: auto;
+        padding: 0;
+        bottom: 164px;
+    }
+
+    .engine-history-right {
+        left: 16px;
+        right: 16px;
+        width: auto;
+        height: auto;
+        top: 16px;
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .engine-history-events {
+        padding: 12px 16px 12px 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        backdrop-filter: blur(12px);
+    }
+
+    .engine-history-title {
+        max-width: none;
+    }
+
+    .engine-history-dots {
+        top: 354px;
+        right: 18px;
+        transform: none;
+    }
+
+    .engine-history-hint {
+        bottom: 116px;
+    }
+
+    .engine-history-nav {
+        grid-template-columns: 1fr;
+    }
+
+    .engine-history-tab {
+        border-left: 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .engine-history-tab:first-child {
+        border-top: 0;
+    }
+
     .tab-nav {
         padding: 0 5px;
     }
@@ -1223,5 +1806,60 @@ section h4 {
 
     .model3d-wrapper {
         height: 350px;
+    }
+
+    .engine-history-stage {
+        top: 12px;
+    }
+
+    .engine-history-progress {
+        left: 12px;
+        right: 12px;
+        top: 12px;
+    }
+
+    .engine-history-stage {
+        height: 980px;
+    }
+
+    .engine-history-left,
+    .engine-history-right {
+        left: 12px;
+        right: 12px;
+    }
+
+    .engine-history-right {
+        top: 12px;
+    }
+
+    .engine-history-left {
+        bottom: 170px;
+    }
+
+    .engine-history-num {
+        font-size: 4.3rem;
+    }
+
+    .engine-history-title {
+        font-size: 1.45rem;
+    }
+
+    .engine-history-desc,
+    .engine-history-event-body {
+        font-size: 0.88rem;
+    }
+
+    .engine-history-event {
+        gap: 12px;
+    }
+
+    .engine-history-event-year {
+        min-width: 56px;
+        font-size: 0.65rem;
+    }
+
+    .engine-history-hint {
+        bottom: 126px;
+        letter-spacing: 0.22em;
     }
 }

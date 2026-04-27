@@ -6,19 +6,25 @@ let currentRPM=800;
 const firingOrder3d=[1,5,4,8,6,3,7,2];
 const BP_LINE=0xc8b88a, BP_DIM=0x8a7e5e, BP_BG=0xdfe4ea;
 
-// Solid materials
-const matBlock=new THREE.MeshStandardMaterial({color:0x40454c,roughness:0.72,metalness:0.28});
-const matCastAlum=new THREE.MeshStandardMaterial({color:0xc8cdd3,roughness:0.42,metalness:0.74});
-const matAlum=new THREE.MeshStandardMaterial({color:0xd9dde2,roughness:0.26,metalness:0.84});
-const matDark=new THREE.MeshStandardMaterial({color:0x16191d,roughness:0.62,metalness:0.22});
-const matChrome=new THREE.MeshStandardMaterial({color:0xcfd3d8,roughness:0.12,metalness:1.0});
-const matExhaust=new THREE.MeshStandardMaterial({color:0x6c6f73,roughness:0.38,metalness:0.78});
-const matValveCover=new THREE.MeshPhysicalMaterial({color:0x25292e,roughness:0.86,metalness:0.08,clearcoat:0.15,clearcoatRoughness:0.78});
-const matCoverTrim=new THREE.MeshStandardMaterial({color:0x69717a,roughness:0.35,metalness:0.65});
-const matRubber=new THREE.MeshStandardMaterial({color:0x1d2227,roughness:0.9,metalness:0.05});
-const matPiston=new THREE.MeshStandardMaterial({color:0xcccccc,roughness:0.1,metalness:0.85});
-const matRod=new THREE.MeshStandardMaterial({color:0x555555,roughness:0.15,metalness:0.9});
-const matSpark=new THREE.MeshStandardMaterial({color:0xdddddd,roughness:0.3,metalness:0.6});
+// Solid materials — declared here, initialised inside initMaterials() once THREE is ready
+let matBlock,matCastAlum,matAlum,matDark,matChrome,matExhaust,matValveCover,matCoverTrim,matRubber,matPiston,matRod,matSpark;
+
+function initMaterials(){
+  matBlock=new THREE.MeshStandardMaterial({color:0x40454c,roughness:0.72,metalness:0.28});
+  matCastAlum=new THREE.MeshStandardMaterial({color:0xc8cdd3,roughness:0.42,metalness:0.74});
+  matAlum=new THREE.MeshStandardMaterial({color:0xd9dde2,roughness:0.26,metalness:0.84});
+  matDark=new THREE.MeshStandardMaterial({color:0x16191d,roughness:0.62,metalness:0.22});
+  matChrome=new THREE.MeshStandardMaterial({color:0xcfd3d8,roughness:0.12,metalness:1.0});
+  matExhaust=new THREE.MeshStandardMaterial({color:0x6c6f73,roughness:0.38,metalness:0.78});
+  matValveCover=new THREE.MeshPhysicalMaterial({color:0x25292e,roughness:0.86,metalness:0.08,clearcoat:0.15,clearcoatRoughness:0.78});
+  matCoverTrim=new THREE.MeshStandardMaterial({color:0x69717a,roughness:0.35,metalness:0.65});
+  matRubber=new THREE.MeshStandardMaterial({color:0x1d2227,roughness:0.9,metalness:0.05});
+  matPiston=new THREE.MeshStandardMaterial({color:0xcccccc,roughness:0.1,metalness:0.85});
+  matRod=new THREE.MeshStandardMaterial({color:0x555555,roughness:0.15,metalness:0.9});
+  matSpark=new THREE.MeshStandardMaterial({color:0xdddddd,roughness:0.3,metalness:0.6});
+  fireGlow=new THREE.MeshStandardMaterial({color:0xff5500,emissive:0xff4400,emissiveIntensity:4,metalness:0.3,roughness:0.3});
+  defSpk=new THREE.MeshStandardMaterial({color:0xdddddd,metalness:0.6,roughness:0.3});
+}
 
 // Solid shell helper
 function registerShell(mesh){
@@ -134,6 +140,8 @@ function createCoverBadge(){
 }
 
 function init3DEngine(){
+  // Guard: THREE must be loaded
+  if(typeof THREE==='undefined'){console.error('Three.js not loaded');return;}
   const c=document.getElementById('engine3dContainer');
   if(!c){console.error('engine3dContainer not found');return;}
   // Wait one frame so the browser has finished layout and clientWidth/Height are non-zero
@@ -144,6 +152,8 @@ function init3DEngine(){
   const w=c.clientWidth,h=c.clientHeight;
   // Prevent double-init
   if(renderer3d){return;}
+  // Initialise all THREE materials now that THREE is confirmed loaded
+  initMaterials();
   scene3d=new THREE.Scene();
   const studioTexture=createStudioTexture();
   scene3d.background=studioTexture;
@@ -469,9 +479,8 @@ function addLabel(text,x,y,z){
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 
-// Spark glow materials for solid style
-const fireGlow=new THREE.MeshStandardMaterial({color:0xff5500,emissive:0xff4400,emissiveIntensity:4,metalness:0.3,roughness:0.3});
-const defSpk=new THREE.MeshStandardMaterial({color:0xdddddd,metalness:0.6,roughness:0.3});
+// Spark glow materials — initialised inside initMaterials() once THREE is ready
+let fireGlow,defSpk;
 
 function animate3D(){
   requestAnimationFrame(animate3D);

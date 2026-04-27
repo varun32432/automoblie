@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js"></script>
+
 </head>
 
 <body>
@@ -186,6 +186,46 @@
                 </div>
             </section>
 
+            <!-- Engine History Section -->
+            <section class="history-section">
+                <h2>History of Engines</h2>
+                <p class="intro-text">From steam boilers and atmospheric pumps to compact combustion engines and electrified drivetrains, engine design has been a long march toward more usable power.</p>
+
+                <div class="engine-history-shell">
+                    <div class="engine-history-stage" id="engineHistoryStage" aria-label="Scroll-driven history of engines">
+                        <div class="engine-history-canvas" id="engineHistoryCanvas" aria-hidden="true"></div>
+                        <div class="engine-history-vignette"></div>
+
+                        <div class="engine-history-overlay">
+                            <div class="engine-history-progress">
+                                <div class="engine-history-progress-meta">
+                                    <span class="engine-history-progress-step" id="engineHistoryStep">Chapter 1 / 3</span>
+                                    <span class="engine-history-progress-status" id="engineHistoryStatus">Keep scrolling to reveal the next era</span>
+                                </div>
+                                <div class="engine-history-progress-track">
+                                    <div class="engine-history-progress-fill" id="engineHistoryProgressFill"></div>
+                                </div>
+                            </div>
+
+                            <div class="engine-history-left">
+                                <div class="engine-history-era history-fade-target" id="engineHistoryEra"></div>
+                                <div class="engine-history-num history-fade-target" id="engineHistoryNum"></div>
+                                <h3 class="engine-history-title history-fade-target" id="engineHistoryTitle"></h3>
+                                <p class="engine-history-desc history-fade-target" id="engineHistoryDesc"></p>
+                            </div>
+
+                            <div class="engine-history-right">
+                                <div class="engine-history-events" id="engineHistoryEvents"></div>
+                            </div>
+
+                            <div class="engine-history-dots" id="engineHistoryDots" aria-hidden="true"></div>
+                            <div class="engine-history-hint">Keep scrolling to unlock the full engine history</div>
+                            <div class="engine-history-nav" id="engineHistoryNav"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- 3D Engine Model Section -->
             <section class="animation-section">
                 <div class="animation-header">
@@ -205,6 +245,37 @@
                     <div class="overlay-bl">
                         <span class="hint-text">DRAG TO ORBIT · SCROLL TO ZOOM</span>
                     </div>
+
+                    <!-- Engine Status — positioned in the right empty area -->
+                    <div class="overlay-status">
+                        <div class="status-card">
+                            <div class="status-card-header">
+                                <span class="status-dot status-dot-stroke"></span>
+                                <span class="status-card-label">CURRENT STROKE</span>
+                            </div>
+                            <div class="status-card-value" id="currentStroke3D">Idle</div>
+                            <p class="status-card-desc" id="strokeDesc3D">Press Play to start the engine simulation and watch the pistons fire.</p>
+                        </div>
+                        <div class="status-card">
+                            <div class="status-card-header">
+                                <span class="status-dot status-dot-engine"></span>
+                                <span class="status-card-label">ENGINE STATUS</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-row-label">Firing Cylinder</span>
+                                <span class="status-row-value" id="firingCyl3D">—</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-row-label">RPM</span>
+                                <span class="status-row-value" id="rpm3D">0</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-row-label">Cycle Progress</span>
+                                <span class="status-row-value"><span id="progress3D">0</span>%</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="engine3dContainer"></div>
                 </div>
 
@@ -232,19 +303,6 @@
                 <div class="controls-3d">
                     <button class="btn btn-primary" onclick="togglePlay3D()">▶ Play / Pause</button>
                     <button class="btn btn-secondary" onclick="reset3D()">⟲ Reset</button>
-                </div>
-
-                <div class="animation-info">
-                    <div class="info-box">
-                        <h3>Current Stroke: <span id="currentStroke3D">Idle</span></h3>
-                        <p id="strokeDesc3D">Press Play to start the engine simulation and watch the pistons fire.</p>
-                    </div>
-                    <div class="info-box">
-                        <h3>Engine Status</h3>
-                        <p>Firing Cylinder: <span id="firingCyl3D">—</span></p>
-                        <p>RPM: <span id="rpm3D">0</span></p>
-                        <p>Cycle Progress: <span id="progress3D">0</span>%</p>
-                    </div>
                 </div>
             </section>
 
@@ -420,6 +478,7 @@
 
                     <h3>✓ Universal Principle:</h3>
                     <p>Same 4-stroke cycle applies to all internal combustion engines</p>
+                    <h3>✓ History of the Engines</h3>
 
                     <h3>✓ V8 Advantages:</h3>
                     <p>8 cylinders produce smooth, powerful motion with frequent power strokes and distinctive sound</p>
@@ -434,6 +493,14 @@
         </footer>
     </div>
 
+    <!-- Three.js: primary CDN with fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js"></script>
+    <script>
+      if(typeof THREE === 'undefined'){
+        document.write('<script src="https://unpkg.com/three@0.150.0/build/three.min.js"><\/script>');
+      }
+    </script>
+    <script src="engine-history-scroll.js"></script>
     <script src="engine3d.js"></script>
     <script src="engine.js"></script>
 </body>
