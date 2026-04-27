@@ -517,11 +517,12 @@ section h4 {
     box-shadow: var(--shadow-medium);
 }
 
-#engineCanvas {
+#engineCanvas, canvas {
     display: block;
     width: 100%;
     max-width: 800px;
     height: auto;
+    border-radius: 10px;
 }
 
 /* Controls */

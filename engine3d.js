@@ -134,7 +134,16 @@ function createCoverBadge(){
 }
 
 function init3DEngine(){
-  const c=document.getElementById('engine3dContainer'),w=c.clientWidth,h=c.clientHeight;
+  const c=document.getElementById('engine3dContainer');
+  if(!c){console.error('engine3dContainer not found');return;}
+  // Wait one frame so the browser has finished layout and clientWidth/Height are non-zero
+  if(c.clientWidth===0||c.clientHeight===0){
+    requestAnimationFrame(init3DEngine);
+    return;
+  }
+  const w=c.clientWidth,h=c.clientHeight;
+  // Prevent double-init
+  if(renderer3d){return;}
   scene3d=new THREE.Scene();
   const studioTexture=createStudioTexture();
   scene3d.background=studioTexture;
@@ -522,19 +531,14 @@ function toggleXRay(){isXRay=!isXRay;document.getElementById('xrayBtn').classLis
 function togglePlay3D(){is3dRunning=!is3dRunning;const b=document.getElementById('play3dBtn');
 b.textContent=is3dRunning?'⏸ Pause':'▶ Resume';b.classList.toggle('active-pause',is3dRunning);}
 function reset3D(){is3dRunning=false;crankAngle3d=0;rotX=0.3;rotY=-0.5;currentRPM=800;
-document.getElementById('rpmSlider').value=800;
-document.getElementById('play3dBtn').textContent='▶ Resume';document.getElementById('play3dBtn').classList.remove('active-pause');
-document.getElementById('currentStroke3D').textContent='Idle';document.getElementById('strokeDesc3D').textContent='Press Play to start.';
-document.getElementById('firingCyl3D').textContent='—';document.getElementById('rpm3D').textContent='0';document.getElementById('progress3D').textContent='0';
-updatePistons();}
-function togglePlay3D(){is3dRunning=!is3dRunning;const b=document.getElementById('play3dBtn');
-b.textContent=is3dRunning?'Pause':'Resume';b.classList.toggle('active-pause',is3dRunning);}
-function reset3D(){is3dRunning=false;crankAngle3d=0;rotX=0.3;rotY=-0.5;currentRPM=800;
-document.getElementById('rpmSlider').value=800;
-document.getElementById('play3dBtn').textContent='Resume';document.getElementById('play3dBtn').classList.remove('active-pause');
-document.getElementById('currentStroke3D').textContent='Idle';document.getElementById('strokeDesc3D').textContent='Press Play to start.';
-document.getElementById('firingCyl3D').textContent='-';document.getElementById('rpm3D').textContent='0';document.getElementById('progress3D').textContent='0';
-document.getElementById('rpmValue').textContent='800 rpm';
+const sl=document.getElementById('rpmSlider');if(sl)sl.value=800;
+const pb=document.getElementById('play3dBtn');if(pb){pb.textContent='▶ Resume';pb.classList.remove('active-pause');}
+const cs=document.getElementById('currentStroke3D');if(cs)cs.textContent='Idle';
+const sd=document.getElementById('strokeDesc3D');if(sd)sd.textContent='Press Play to start.';
+const fc=document.getElementById('firingCyl3D');if(fc)fc.textContent='—';
+const r3=document.getElementById('rpm3D');if(r3)r3.textContent='0';
+const pr=document.getElementById('progress3D');if(pr)pr.textContent='0';
+const rv=document.getElementById('rpmValue');if(rv)rv.textContent='800 rpm';
 updatePistons();}
 function set3DSpeed(v){speed3d=parseFloat(v);document.getElementById('speed3dValue').textContent=v+'x';}
 
