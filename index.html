@@ -37,9 +37,48 @@
                     <span class="hero-stat-label">Orbit and inspect</span>
                 </div>
             </div>
-            <h1>🚗 hi my name is varun  Engine Simulator</h1>
             <p class="subtitle">Discover How Internal Combustion Engines Work</p>
         </header>
+
+        <!-- Engine History Section - First Scrollable Content -->
+        <section class="history-section">
+            <h2>The Evolution of Engine Technology</h2>
+            <p class="intro-text">From steam boilers and atmospheric pumps to compact combustion engines and electrified drivetrains, engine design has been a long march toward more usable power.</p>
+
+            <div class="engine-history-shell">
+                <div class="engine-history-stage" id="engineHistoryStage" aria-label="Scroll-driven history of engines">
+                    <div class="engine-history-canvas" id="engineHistoryCanvas" aria-hidden="true"></div>
+                    <div class="engine-history-vignette"></div>
+
+                    <div class="engine-history-overlay">
+                        <div class="engine-history-progress">
+                            <div class="engine-history-progress-meta">
+                                <span class="engine-history-progress-step" id="engineHistoryStep">Chapter 1 / 3</span>
+                                <span class="engine-history-progress-status" id="engineHistoryStatus">Keep scrolling to reveal the next era</span>
+                            </div>
+                            <div class="engine-history-progress-track">
+                                <div class="engine-history-progress-fill" id="engineHistoryProgressFill"></div>
+                            </div>
+                        </div>
+
+                        <div class="engine-history-left">
+                            <div class="engine-history-era history-fade-target" id="engineHistoryEra"></div>
+                            <div class="engine-history-num history-fade-target" id="engineHistoryNum"></div>
+                            <h3 class="engine-history-title history-fade-target" id="engineHistoryTitle"></h3>
+                            <p class="engine-history-desc history-fade-target" id="engineHistoryDesc"></p>
+                        </div>
+
+                        <div class="engine-history-right">
+                            <div class="engine-history-events" id="engineHistoryEvents"></div>
+                        </div>
+
+                        <div class="engine-history-dots" id="engineHistoryDots" aria-hidden="true"></div>
+                        <div class="engine-history-hint">Keep scrolling to unlock the full engine history</div>
+                        <div class="engine-history-nav" id="engineHistoryNav"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Main Content -->
         <main class="main-content">
@@ -190,45 +229,13 @@
                 </div>
             </section>
 
-            <!-- Engine History Section -->
-            <section class="history-section">
-                <h2>History of Engines</h2>
-                <p class="intro-text">From steam boilers and atmospheric pumps to compact combustion engines and electrified drivetrains, engine design has been a long march toward more usable power.</p>
-
-                <div class="engine-history-shell">
-                    <div class="engine-history-stage" id="engineHistoryStage" aria-label="Scroll-driven history of engines">
-                        <div class="engine-history-canvas" id="engineHistoryCanvas" aria-hidden="true"></div>
-                        <div class="engine-history-vignette"></div>
-
-                        <div class="engine-history-overlay">
-                            <div class="engine-history-progress">
-                                <div class="engine-history-progress-meta">
-                                    <span class="engine-history-progress-step" id="engineHistoryStep">Chapter 1 / 3</span>
-                                    <span class="engine-history-progress-status" id="engineHistoryStatus">Keep scrolling to reveal the next era</span>
-                                </div>
-                                <div class="engine-history-progress-track">
-                                    <div class="engine-history-progress-fill" id="engineHistoryProgressFill"></div>
-                                </div>
-                            </div>
-
-                            <div class="engine-history-left">
-                                <div class="engine-history-era history-fade-target" id="engineHistoryEra"></div>
-                                <div class="engine-history-num history-fade-target" id="engineHistoryNum"></div>
-                                <h3 class="engine-history-title history-fade-target" id="engineHistoryTitle"></h3>
-                                <p class="engine-history-desc history-fade-target" id="engineHistoryDesc"></p>
-                            </div>
-
-                            <div class="engine-history-right">
-                                <div class="engine-history-events" id="engineHistoryEvents"></div>
-                            </div>
-
-                            <div class="engine-history-dots" id="engineHistoryDots" aria-hidden="true"></div>
-                            <div class="engine-history-hint">Keep scrolling to unlock the full engine history</div>
-                            <div class="engine-history-nav" id="engineHistoryNav"></div>
-                        </div>
-                    </div>
+            <!-- Visual Separator Between History and 3D Engine -->
+            <div class="section-divider">
+                <div class="divider-content">
+                    <h2>From History to Modern Technology</h2>
+                    <p>Now explore our interactive 3D V8 engine model</p>
                 </div>
-            </section>
+            </div>
 
             <!-- 3D Engine Model Section -->
             <section class="animation-section">
