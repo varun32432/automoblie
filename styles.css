@@ -148,8 +148,8 @@ body::before {
     background-repeat: no-repeat;
     background-attachment: fixed;
     position: relative;
-    padding: 40px 28px 30px;
-    min-height: 40vh;
+    padding: 64px 28px 56px;
+    min-height: 60vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
