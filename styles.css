@@ -2534,9 +2534,13 @@ section h4 {
 
 .engine-history-stage {
 
-    position: relative;
+    position: sticky;
+
+    top: 24px;
 
     min-height: 680px;
+
+    z-index: 1;
 
     border-radius: 28px;
 

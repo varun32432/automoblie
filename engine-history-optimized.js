@@ -176,6 +176,7 @@
       };
 
       const state = { kind: "steam", pistons: [], spinners: [], glows: [], rotor: null, disposable: [] };
+      const renderNow = () => renderer.render(scene, camera);
       const glow = () => {
         const material = new THREE.MeshBasicMaterial({ color: 0xff9944, transparent: true, opacity: 0.5 });
         state.disposable.push(material);
@@ -197,9 +198,14 @@
       const build = (kind) => {
         clear();
         state.kind = kind;
+        group.rotation.set(0, this.targetRotY, 0);
         if (kind === "steam") this.buildSteam(group, mats, state, glow);
         else if (kind === "ic") this.buildIC(group, mats, state, glow);
         else this.buildModern(group, mats, state, glow);
+        if (this.sceneState) {
+          this.sceneState.currentKind = kind;
+        }
+        renderNow();
       };
 
       const clock = new THREE.Clock();
@@ -244,7 +250,7 @@
         renderer.render(scene, camera);
       };
 
-      this.sceneState = { camera, renderer, build, rafId: 0 };
+      this.sceneState = { camera, renderer, build, renderNow, currentKind: ERAS[0].engine, rafId: 0 };
       build(ERAS[0].engine);
       animate();
     }
@@ -492,6 +498,7 @@
       this.numEl.textContent = current.num;
       this.titleEl.textContent = current.title;
       this.descEl.textContent = current.desc;
+      this.root.dataset.engineHistoryEra = current.engine;
 
       this.fadeTargets.forEach((element) => {
         element.classList.remove("history-fade-in");
@@ -500,7 +507,13 @@
       });
 
       this.renderEvents(current.events);
-      if (this.sceneState) this.sceneState.build(current.engine);
+      if (this.sceneState) {
+        if (this.sceneState.currentKind !== current.engine) {
+          this.sceneState.build(current.engine);
+        } else {
+          this.sceneState.renderNow();
+        }
+      }
     }
   }
 
